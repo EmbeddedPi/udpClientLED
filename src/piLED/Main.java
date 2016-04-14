@@ -12,9 +12,7 @@ public final class Main extends JavaPlugin implements Listener {
 	
 	private short local = 0;
 	private short notLocal = 0;
-	private boolean areYouLocal = false;
 	private boolean recentJoin = false;
-	private String recentPlayer = "";
 	private String recentPlayerIP = "";
 	private static final String gpioPath="/sys/class/gpio";
 	private static final String exportPath= gpioPath + "/export";
@@ -79,28 +77,22 @@ public final class Main extends JavaPlugin implements Listener {
     @EventHandler
     public void onLogin(PlayerJoinEvent event) {
     	// Check whether internal or external IP address
-    	recentPlayer = event.getPlayer().getName();
     	recentPlayerIP = event.getPlayer().getAddress().getHostString();
     	recentJoin = true;
     	isLocal();
     	// Update local/notLocal LED status according
     	updateLED();
-        // The following lines are for test purposes only
-    	debugMessage();	
     }
     
     // Someone leaves server
     @EventHandler
     public void onLogout(PlayerQuitEvent event) {
     	// Check whether internal or external IP address
-    	recentPlayer = event.getPlayer().getName();
     	recentPlayerIP = event.getPlayer().getAddress().getHostString();
     	recentJoin = false;
     	isLocal();
     	// Update local/notLocal LED status according
     	updateLED();
-    	// The following lines are for test purposes only
-    	debugMessage();
     }
 
     // Variable setting for device path
@@ -122,7 +114,6 @@ public final class Main extends JavaPlugin implements Listener {
     private void isLocal() {
     	// Set local variables and count
     	if (recentPlayerIP.equals("192.168.1.1")) {
-    		areYouLocal = false;
     		if (recentJoin) {
     			notLocal++;
     			}
@@ -131,7 +122,6 @@ public final class Main extends JavaPlugin implements Listener {
     			}
     		} 	
     	else if (recentPlayerIP.startsWith("192.168.1")) {
-    		areYouLocal = true;
     		if (recentJoin) {
     			local++;
     			}
@@ -140,7 +130,6 @@ public final class Main extends JavaPlugin implements Listener {
     			}
     		}
     	else {
-    		areYouLocal = false;
     		if (recentJoin) {
     			notLocal++;
     			}
@@ -177,22 +166,6 @@ public final class Main extends JavaPlugin implements Listener {
         catch (Exception exception) {
         	exception.printStackTrace();
         }
-    }
-    
-    // Test messages to server log
-    private void debugMessage() {
-    	String joinString ="";
-    	if (recentJoin) {
-    		joinString =" has joined Olly's server.";
-    		}
-    	else {
-    	joinString =" has left Olly's server.";
-    		}
-    	getLogger().info(recentPlayer + joinString); 
-    	getLogger().info("They live at " + recentPlayerIP);  	
-    	getLogger().info("Are they local is " + areYouLocal);
-    	getLogger().info("Locals online = " + local);
-    	getLogger().info("Not locals online = " + notLocal);   	
     }
 }
 
