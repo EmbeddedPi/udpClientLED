@@ -13,9 +13,9 @@
             	<artifactId>maven-compiler-plugin</artifactId>
             	<version>3.1</version>
             	<configuration>
-            		<executable>/opt/jdk1.7.0_60/bin/javac</executable>
-            		<source>1.7</source>
-            		<target>1.7</target>
+            		<executable>/opt/jdk1.8.0_77/bin/javac</executable>
+            		<source>1.8</source>
+            		<target>1.8</target>
             	</configuration>
 			</plugin>
 		</plugins>
