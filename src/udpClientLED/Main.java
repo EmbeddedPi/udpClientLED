@@ -8,12 +8,18 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import java.io.File;
 import java.io.FileWriter;
 
+//TODO Check which bits of this are essential
+import java.io.*;
+import java.net.*;
+
+
 public final class Main extends JavaPlugin implements Listener {
 	
 	private short local = 0;
 	private short notLocal = 0;
 	private boolean recentJoin = false;
 	private String recentPlayerIP = "";
+	/*
 	private static final String gpioPath="/sys/class/gpio";
 	private static final String exportPath= gpioPath + "/export";
 	private static final String unexportPath= gpioPath + "/unexport";
@@ -24,12 +30,13 @@ public final class Main extends JavaPlugin implements Listener {
 	private static final String gpioOn = "1";
 	private static final String gpioOff = "0";
 	private static final int[] gpioChannel = {18,23,24};
-		
+	*/
+	
 	@Override
     public void onEnable() {
 		// register listener
 		getServer().getPluginManager().registerEvents(this, this);
-				
+		/*		
 		// Open file handles for GPIO unexport and export
 		try {
 			FileWriter unexportFile = new FileWriter(unexportPath);
@@ -61,6 +68,7 @@ public final class Main extends JavaPlugin implements Listener {
 		
 		// Switch on server LED
 		writeLED (gpioChannel[0], gpioOn);
+		*/
 		getLogger().info("piLED is switched on."); 
 	}
  
@@ -93,6 +101,29 @@ public final class Main extends JavaPlugin implements Listener {
     	isLocal();
     	// Update local/notLocal LED status according
     	updateLED();
+    }
+    
+    public static void udpTransmit(String args[]) throws Exception
+    {
+       BufferedReader inFromUser =
+          new BufferedReader(new InputStreamReader(System.in));
+       DatagramSocket clientSocket = new DatagramSocket();
+       InetAddress IPAddress = InetAddress.getByName("192.168.1.34");
+       byte[] sendData = new byte[16];
+       byte[] receiveData = new byte[16];
+       String sentence = inFromUser.readLine();
+       sendData = sentence.getBytes();
+       DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
+       clientSocket.send(sendPacket);
+       DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+       clientSocket.receive(receivePacket);
+	   InetAddress IPAddressRec = receivePacket.getAddress();
+       int port = receivePacket.getPort();
+	   System.out.println("Got this from " + IPAddressRec + " @ port " + port);
+       String modifiedSentence = new String(receivePacket.getData());
+       System.out.println("FROM SERVER:" + modifiedSentence);
+	   System.out.println("IPAddress = " + IPAddress);
+       clientSocket.close();
     }
 
     // Variable setting for device path
@@ -154,7 +185,7 @@ public final class Main extends JavaPlugin implements Listener {
     		writeLED (gpioChannel[2], gpioOff);    			
     		}	
     }
-    
+    /*
     // LED IO 
     private void writeLED (int channel, String status) {
     	try {
@@ -167,5 +198,6 @@ public final class Main extends JavaPlugin implements Listener {
         	exception.printStackTrace();
         }
     }
+    */
 }
 
