@@ -1,15 +1,9 @@
-piLED
-======
+udpClientLED
+============
 
-A status indicator plugin for a RaspberryPi Minecraft server.
+A status indicator plugin for a Minecraft server. The minecraft server can be any machine running a java based Minecraft server such as Bukkit or Spigot. Status messages are sent from this plugin to a RaspberryPi running the udpServerLED executable jar that needs to be paired with this software.
 
-This application displays the status of a Minecraft server on external LEDs using Raspberry Pi GPIO pins.
-
-Server is online (GPIO18) => Red
-
-LAN players present (GPIO23) => Yellow
-
-Internet players present (GPIO24) => Green
+The combined application displays the status of a Minecraft server on external LEDs using Raspberry Pi GPIO pins.
 
 
 Usage
@@ -17,16 +11,17 @@ Usage
 This repository is a Maven project based on source code built in Eclipse. If you just want to build it without delving into the code then 
 just download the completed plugin .jar from the latest release.
 
-[https://github.com/EmbeddedPi/piLED/releases](https://github.com/EmbeddedPi/piLED/releases)
+TBC
+[https://github.com/EmbeddedPi/udpClientLED/releases](https://github.com/EmbeddedPi/udpClientLED/releases)
 
 
 Current status
 ==============
-Fully working and tested on Glowstone and Spigot
+udpServerLED is tested and working. udpClientLED is work in progress
 
 
 Hardware
 ========
-Schematic and physical hardware can be seen on the project site.
+Schematic and physical hardware are the same as my previous all-in-one piLED project which can be seen on the project site.
 
 [http://embeddedpi.github.io/piLED/](http://embeddedpi.github.io/piLED/)

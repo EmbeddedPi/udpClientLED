@@ -1,3 +1,3 @@
-name: piLED
-main: piLED.Main
-version: 1.0.0
+name: udpClientLED
+main: udpClientLED.Main
+version: 0.0.1
