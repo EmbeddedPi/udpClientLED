@@ -1,7 +1,7 @@
 udpClientLED
 ============
 
-A status indicator plugin for a Minecraft server. The minecraft server can be any machine running a java based Minecraft server such as Bukkit or Spigot. Status messages are sent from this plugin to a RaspberryPi running the udpServerLED executable jar that needs to be paired with this software.
+A status indicator plugin for a Minecraft server. The Minecraft server can be any machine running a java based server such as Bukkit or Spigot. Status messages are sent from this plugin to a RaspberryPi running the udpServerLED executable jar that needs to be paired with this software.
 
 The combined application displays the status of a Minecraft server on external LEDs using Raspberry Pi GPIO pins.
 

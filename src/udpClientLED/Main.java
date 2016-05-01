@@ -5,12 +5,15 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import java.io.File;
-import java.io.FileWriter;
+//import java.io.File;
+//import java.io.FileWriter;
 
 //TODO Check which bits of this are essential
-import java.io.*;
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+//import java.io.*;
+//import java.net.*;
 
 
 public final class Main extends JavaPlugin implements Listener {
@@ -19,6 +22,7 @@ public final class Main extends JavaPlugin implements Listener {
 	private short notLocal = 0;
 	private boolean recentJoin = false;
 	private String recentPlayerIP = "";
+	private static final String udpServerIP = "192.168.1.34";
 	/*
 	private static final String gpioPath="/sys/class/gpio";
 	private static final String exportPath= gpioPath + "/export";
@@ -69,16 +73,16 @@ public final class Main extends JavaPlugin implements Listener {
 		// Switch on server LED
 		writeLED (gpioChannel[0], gpioOn);
 		*/
-		getLogger().info("piLED is switched on."); 
+		udpTransmit ("Funky Disco");
+		getLogger().info("udpClientLED is switched on."); 
+		udpTransmit ("Red On");
 	}
  
     @Override
     public void onDisable() {
         //Switch off all LEDs
-        writeLED (gpioChannel[0], gpioOff);
-        writeLED (gpioChannel[1], gpioOff);
-        writeLED (gpioChannel[2], gpioOff);
-        getLogger().info("piLED has been extinguished.");
+    	udpTransmit ("All Off");
+        getLogger().info("udpClientLED has been extinguished.");
     }
     
     // Someone joins server
@@ -103,16 +107,16 @@ public final class Main extends JavaPlugin implements Listener {
     	updateLED();
     }
     
-    public static void udpTransmit(String args[]) throws Exception
-    {
-       BufferedReader inFromUser =
-          new BufferedReader(new InputStreamReader(System.in));
+    public static void udpTransmit(String message) {
+    try {
+       //BufferedReader inFromUser =
+       //  new BufferedReader(new InputStreamReader(System.in));
        DatagramSocket clientSocket = new DatagramSocket();
-       InetAddress IPAddress = InetAddress.getByName("192.168.1.34");
+       InetAddress IPAddress = InetAddress.getByName(udpServerIP);
        byte[] sendData = new byte[16];
        byte[] receiveData = new byte[16];
-       String sentence = inFromUser.readLine();
-       sendData = sentence.getBytes();
+       // String sentence = inFromUser.readLine();
+       sendData = message.getBytes();
        DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
        clientSocket.send(sendPacket);
        DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
@@ -125,7 +129,12 @@ public final class Main extends JavaPlugin implements Listener {
 	   System.out.println("IPAddress = " + IPAddress);
        clientSocket.close();
     }
+    catch (Exception e) {
+    	e.printStackTrace();
+    }
+    }
 
+/*
     // Variable setting for device path
     private static String getDevicePath(int pinNumber) {
  	   return String.format(devicePath, pinNumber);
@@ -140,6 +149,8 @@ public final class Main extends JavaPlugin implements Listener {
     private static String getValuePath(int pinNumber) {
  	   return String.format(valuePath, pinNumber);
     }
+
+*/    
     
     // Determine player location
     private void isLocal() {
@@ -173,16 +184,16 @@ public final class Main extends JavaPlugin implements Listener {
     // Update player LED status
     private void updateLED() {
     	if (local > 0) {
-    		writeLED (gpioChannel[1], gpioOn);
+    		udpTransmit ("Amber On");
     		}
     	else {
-    		writeLED (gpioChannel[1], gpioOff);
+    		udpTransmit ("Amber Off");
     		}
     	if (notLocal > 0) {
-    		writeLED (gpioChannel[2], gpioOn); 		
+    		udpTransmit ("Green On");		
     		}
     	else {
-    		writeLED (gpioChannel[2], gpioOff);    			
+    		udpTransmit ("Green Off");		
     		}	
     }
     /*
