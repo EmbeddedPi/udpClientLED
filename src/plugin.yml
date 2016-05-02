@@ -1,3 +1,14 @@
 name: udpClientLED
 main: udpClientLED.Main
 version: 0.0.1
+commands:
+   setLEDIPAddress:
+      description: This sets the IP address to send LED status updates to.
+      usage: /setLEDIPAddress [ipAddress]
+      permission: udpClientLED.setLEDIPAddress
+      permission-message: No you don't, you just aren't worthy!
+   setFunkyDisco:
+      description: This just sends soem random lights.
+      usage: /FunkyDisco
+      permission: udpClientLED.FunkyDisco
+      permission-message: No you don't, you just aren't funky enough!

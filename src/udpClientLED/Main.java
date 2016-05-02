@@ -5,16 +5,11 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-//import java.io.File;
-//import java.io.FileWriter;
-
-//TODO Check which bits of this are essential
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-//import java.io.*;
-//import java.net.*;
-
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 
 public final class Main extends JavaPlugin implements Listener {
 	
@@ -23,56 +18,12 @@ public final class Main extends JavaPlugin implements Listener {
 	private boolean recentJoin = false;
 	private String recentPlayerIP = "";
 	private static final String udpServerIP = "192.168.1.34";
-	/*
-	private static final String gpioPath="/sys/class/gpio";
-	private static final String exportPath= gpioPath + "/export";
-	private static final String unexportPath= gpioPath + "/unexport";
-	private static final String devicePath= gpioPath + "/gpio%d";
-	private static final String directionPath= devicePath + "/direction";
-	private static final String valuePath= devicePath + "/value";
-	private static final String gpioOut = "out";
-	private static final String gpioOn = "1";
-	private static final String gpioOff = "0";
-	private static final int[] gpioChannel = {18,23,24};
-	*/
 	
 	@Override
     public void onEnable() {
 		// register listener
 		getServer().getPluginManager().registerEvents(this, this);
-		/*		
-		// Open file handles for GPIO unexport and export
-		try {
-			FileWriter unexportFile = new FileWriter(unexportPath);
-			FileWriter exportFile = new FileWriter(exportPath);
-		
-			// Initialise GPIO settings
-			for (Integer channel : gpioChannel) {
-				File exportFileCheck = new File(getDevicePath(channel));
-				if (exportFileCheck.exists()) {
-					unexportFile.write(channel.toString());
-					unexportFile.flush();	
-					}
-				// Set port for use
-				exportFile.write(channel.toString());
-				exportFile.flush();
-				//Set direction file
-				FileWriter directionFile = new FileWriter(getDirectionPath(channel));
-				directionFile.write(gpioOut);
-				directionFile.flush();
-				directionFile.close();
-				}
-					
-			unexportFile.close();
-			exportFile.close();
-			}
-		catch (Exception exception) {
-			exception.printStackTrace();
-			}
-		
-		// Switch on server LED
-		writeLED (gpioChannel[0], gpioOn);
-		*/
+		// Indicate that plugin has started with a light display
 		udpTransmit ("Funky Disco");
 		getLogger().info("udpClientLED is switched on."); 
 		udpTransmit ("Red On");
@@ -106,8 +57,28 @@ public final class Main extends JavaPlugin implements Listener {
     	// Update local/notLocal LED status according
     	updateLED();
     }
-    
-    public static void udpTransmit(String message) {
+   
+    //TODO Sort this out
+    @Override
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {  	
+    	if (cmd.getName().equalsIgnoreCase("setLEDIPAddress")) { 
+    		// output label to check it's OK
+    		getLogger().info("label is " + label); 
+    		getLogger().info("args[0] is " + args[0]); 
+    		// Check whether label is a valid IP address
+    		// Check whether IP address works
+    		// doSomething
+    		return true;
+    	} else if (cmd.getName().equalsIgnoreCase("FunkyDisco")) {
+    		//CallfunkyDisco
+    		udpTransmit ("Funky Disco");
+    		return true;
+    	}
+            // Probably ignore as not a valid command
+    	return false; 
+    }
+
+	public static void udpTransmit(String message) {
     try {
        //BufferedReader inFromUser =
        //  new BufferedReader(new InputStreamReader(System.in));
@@ -128,29 +99,11 @@ public final class Main extends JavaPlugin implements Listener {
        System.out.println("FROM SERVER:" + modifiedSentence);
 	   System.out.println("IPAddress = " + IPAddress);
        clientSocket.close();
-    }
+    	}
     catch (Exception e) {
     	e.printStackTrace();
+    	}
     }
-    }
-
-/*
-    // Variable setting for device path
-    private static String getDevicePath(int pinNumber) {
- 	   return String.format(devicePath, pinNumber);
-    }
-    
-    // Variable setting for direction path
-    private static String getDirectionPath(int pinNumber) {
- 	   return String.format(directionPath, pinNumber);
-    }
-
-    // Variable setting for value path
-    private static String getValuePath(int pinNumber) {
- 	   return String.format(valuePath, pinNumber);
-    }
-
-*/    
     
     // Determine player location
     private void isLocal() {
@@ -196,19 +149,5 @@ public final class Main extends JavaPlugin implements Listener {
     		udpTransmit ("Green Off");		
     		}	
     }
-    /*
-    // LED IO 
-    private void writeLED (int channel, String status) {
-    	try {
-     		FileWriter commandFile = new FileWriter(getValuePath(channel));
-     		commandFile.write(status);
-     		commandFile.flush();
-     		commandFile.close();
-        }
-        catch (Exception exception) {
-        	exception.printStackTrace();
-        }
-    }
-    */
 }
 
