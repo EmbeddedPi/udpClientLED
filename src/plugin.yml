@@ -5,10 +5,10 @@ commands:
    setLEDIPAddress:
       description: This sets the IP address to send LED status updates to.
       usage: /setLEDIPAddress [ipAddress]
-      permission: udpClientLED.setLEDIPAddress
+      permission: op
+      permission-message: No you don't, your level of omnipotency is sadly lacking!
+   listLEDIPAddress:
+      description: This list the current IP address to send LED status updates to.
+      usage: /listLEDIPAddress 
+      permission: op
       permission-message: No you don't, you just aren't worthy!
-   setFunkyDisco:
-      description: This just sends soem random lights.
-      usage: /FunkyDisco
-      permission: udpClientLED.FunkyDisco
-      permission-message: No you don't, you just aren't funky enough!

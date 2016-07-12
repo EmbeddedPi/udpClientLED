@@ -62,20 +62,29 @@ public final class Main extends JavaPlugin implements Listener {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {  	
     	if (cmd.getName().equalsIgnoreCase("setLEDIPAddress")) { 
+    		// Check a single argument for IPAddress
+    		if (args.length < 1) {
+    			sender.sendMessage("Should just be one argument!");
+    	        return false;
+    	    } else if (args.length >1) {
+    	    	sender.sendMessage("Calm down, too many arguments!");
+ 	           	return false;
+    	    } else {
     		// output label to check it's OK
     		getLogger().info("label is " + label); 
     		getLogger().info("args[0] is " + args[0]); 
+    		getLogger().info("Sent by " + sender);
     		// Check whether label is a valid IP address
     		// Check whether IP address works
     		// doSomething
+    		return true;}
+    	} else if (cmd.getName().equalsIgnoreCase("listLEDIPAddress")) {
+    		getLogger().info("UDP server IP is " + udpServerIP);
     		return true;
-    	} else if (cmd.getName().equalsIgnoreCase("FunkyDisco")) {
-    		//CallfunkyDisco
-    		udpTransmit ("Funky Disco");
-    		return true;
-    	}
-            // Probably ignore as not a valid command
+    	} else {
+    		getLogger().info("Gibberish or a typo, eith way it ain't happening");
     	return false; 
+    	}
     }
 
 	public static void udpTransmit(String message) {
