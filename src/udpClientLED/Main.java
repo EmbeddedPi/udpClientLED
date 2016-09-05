@@ -70,19 +70,16 @@ public final class Main extends JavaPlugin implements Listener {
     	    	sender.sendMessage("Calm down, too many arguments!");
  	           	return false;
     	    } else {
-    		// output label to check it's OK
-    		getLogger().info("label is " + label); 
-    		getLogger().info("args[0] is " + args[0]); 
-    		getLogger().info("Sent by " + sender);
-    		// Check whether label is a valid IP address
+    		// Check whether args[0] is a valid IP address
     		// Check whether IP address works
-    		// doSomething
+    		sender.sendMessage("TEST IP address is set to " + args[0]);
+    		// Set new address and reload plugin
     		return true;}
     	} else if (cmd.getName().equalsIgnoreCase("listLEDIPAddress")) {
-    		getLogger().info("UDP server IP is " + udpServerIP);
+    		sender.sendMessage("UDP server IP is " + udpServerIP);
     		return true;
     	} else {
-    		getLogger().info("Gibberish or a typo, eith way it ain't happening");
+    		sender.sendMessage("Gibberish or a typo, either way it ain't happening");
     	return false; 
     	}
     }
