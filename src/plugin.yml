@@ -1,6 +1,6 @@
 name: udpClientLED
 main: udpClientLED.Main
-version: 0.0.1
+version: 0.0.2
 commands:
    setLEDIPAddress:
       description: This sets the IP address to send LED status updates to.
