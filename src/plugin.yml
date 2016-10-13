@@ -1,6 +1,8 @@
 name: udpClientLED
 main: udpClientLED.Main
 version: 0.0.2
+author: EmbeddedPi
+description: In conjunction udpServerLED, this plugin uses a traffic light LED system to indicate server status on and external RaspberryPi.
 commands:
    setLEDIPAddress:
       description: This sets the IP address to send LED status updates to.
