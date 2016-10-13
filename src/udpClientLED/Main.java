@@ -11,7 +11,12 @@ import java.net.InetAddress;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 
 public final class Main extends JavaPlugin implements Listener {
 	
@@ -27,6 +32,9 @@ public final class Main extends JavaPlugin implements Listener {
     public void onEnable() {
 		// register listener
 		getServer().getPluginManager().registerEvents(this, this);
+		// Load or initialise configuration file
+		loadConfiguration();
+		/*
 		// Check config exists or set up if it doesn't
 		File yml = new File("plugins//udpClientLED//config.yml");
 		// File yml = new File("plugins/udpClientLED/config.yml");
@@ -45,6 +53,7 @@ public final class Main extends JavaPlugin implements Listener {
 			getLogger().info("config file already exists");	
 			// Attempt to read config file
 		}	
+		*/
 		// Indicate that plugin has started with a light display
 		udpTransmit ("Funky Disco");
 		getLogger().info("udpClientLED is switched on."); 
@@ -69,7 +78,7 @@ public final class Main extends JavaPlugin implements Listener {
     	updateLED();
     }
     
-    // Someone leaves server
+    // Someone leaves serverc
     @EventHandler
     public void onLogout(PlayerQuitEvent event) {
     	// Check whether internal or external IP address
@@ -177,5 +186,43 @@ public final class Main extends JavaPlugin implements Listener {
     		udpTransmit ("Green Off");		
     		}	
     }
-}
+    
+    public void loadConfiguration() { 
+		// Check config exists or set up if it doesn't
+    	File configFile = new File(getDataFolder(), "config.yml");
+    	File defaultConfig =new File("src//config.yml");
+		//File yml = new File("plugins//udpClientLED//config.yml");
+		if (!configFile.exists()) {
+			getLogger().info("Plugin hasn't been configured so creating config");
+			getConfig().options().copyDefaults(true);
+			//TODO Look at fixing ownership properly
+			configFile.getParentFile().mkdirs();
+			copy(getResource("config.yml"), configFile);
+			//TODO Write default IP address into file
 
+		} else {
+			getLogger().info("config file already exists");	
+			// Attempt to read config file
+			getConfig().options().copyDefaults(false);
+		}
+    	// Command to save once changed
+    	//saveConfig();   	
+    	// Command to reload
+    	//reloadConfig();
+    }
+    
+    private void copy(InputStream in, File file) {
+        try {
+            OutputStream out = new FileOutputStream(file);
+            byte[] buf = new byte[1024];
+            int len;
+            while((len=in.read(buf))>0){
+                out.write(buf,0,len);
+            }
+            out.close();
+            in.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
