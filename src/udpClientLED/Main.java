@@ -190,6 +190,7 @@ public final class Main extends JavaPlugin implements Listener {
     public void loadConfiguration() { 
 		// Check config exists or set up if it doesn't
     	File configFile = new File(getDataFolder(), "config.yml");
+    	getLogger().info("This gives configFile as " + configFile );
     	//File defaultConfig =new File("src//config.yml");
 		//File yml = new File("plugins//udpClientLED//config.yml");
 		if (!configFile.exists()) {
@@ -199,11 +200,11 @@ public final class Main extends JavaPlugin implements Listener {
 			configFile.getParentFile().mkdirs();
 			copy(getResource("config.yml"), configFile);
 			//TODO Write default IP address into file
-
 		} else {
 			getLogger().info("config file already exists");	
 			// Attempt to read config file
 			getConfig().options().copyDefaults(false);
+			getLogger().info("ConfigFile is " + configFile);
 		}
     	// Command to save once changed
     	//saveConfig();   	
