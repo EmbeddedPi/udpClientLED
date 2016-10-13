@@ -10,6 +10,8 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import java.io.File;
+import java.io.IOException;
 
 public final class Main extends JavaPlugin implements Listener {
 	
@@ -18,11 +20,31 @@ public final class Main extends JavaPlugin implements Listener {
 	private boolean recentJoin = false;
 	private String recentPlayerIP = "";
 	private static final String udpServerIP = "192.168.1.34";
+	// Test line to initialise using loopback interface
+	// private static final String udpServerIP = "127.0.0.1";
 	
 	@Override
     public void onEnable() {
 		// register listener
 		getServer().getPluginManager().registerEvents(this, this);
+		// Check config exists or set up if it doesn't
+		File yml = new File("plugins//udpClientLED//config.yml");
+		// File yml = new File("plugins/udpClientLED/config.yml");
+		if (!yml.exists()) {
+			getLogger().info("Plugin hasn't been configured so creating config");
+			try {
+				yml.getParentFile().mkdirs();
+				yml.createNewFile();
+				//TODO TLook at fixing ownership properly
+				//TODO Write default IP address into file
+			} catch (IOException e) {
+				// Can't get at plugins folder for some reason
+				e.printStackTrace();
+			} 
+		} else {
+			getLogger().info("config file already exists");	
+			// Attempt to read config file
+		}	
 		// Indicate that plugin has started with a light display
 		udpTransmit ("Funky Disco");
 		getLogger().info("udpClientLED is switched on."); 
