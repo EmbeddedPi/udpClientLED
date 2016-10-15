@@ -34,26 +34,8 @@ public final class Main extends JavaPlugin implements Listener {
 		getServer().getPluginManager().registerEvents(this, this);
 		// Load or initialise configuration file
 		loadConfiguration();
-		/*
-		// Check config exists or set up if it doesn't
-		File yml = new File("plugins//udpClientLED//config.yml");
-		// File yml = new File("plugins/udpClientLED/config.yml");
-		if (!yml.exists()) {
-			getLogger().info("Plugin hasn't been configured so creating config");
-			try {
-				yml.getParentFile().mkdirs();
-				yml.createNewFile();
-				//TODO TLook at fixing ownership properly
-				//TODO Write default IP address into file
-			} catch (IOException e) {
-				// Can't get at plugins folder for some reason
-				e.printStackTrace();
-			} 
-		} else {
-			getLogger().info("config file already exists");	
-			// Attempt to read config file
-		}	
-		*/
+		String IPAddressLoaded = this.getConfig().getString("LEDIPAddress.IPAddress");
+		getLogger().info("loadedIPAddress is set to " + IPAddressLoaded);
 		// Indicate that plugin has started with a light display
 		udpTransmit ("Funky Disco");
 		getLogger().info("udpClientLED is switched on."); 
@@ -78,7 +60,7 @@ public final class Main extends JavaPlugin implements Listener {
     	updateLED();
     }
     
-    // Someone leaves serverc
+    // Someone leaves server
     @EventHandler
     public void onLogout(PlayerQuitEvent event) {
     	// Check whether internal or external IP address
@@ -188,23 +170,25 @@ public final class Main extends JavaPlugin implements Listener {
     }
     
     public void loadConfiguration() { 
-		// Check config exists or set up if it doesn't
+		// Create virtual config file
     	File configFile = new File(getDataFolder(), "config.yml");
-    	getLogger().info("This gives configFile as " + configFile );
-    	//File defaultConfig =new File("src//config.yml");
-		//File yml = new File("plugins//udpClientLED//config.yml");
+		String IPAddressVirtual = this.getConfig().getString("LEDIPAddress.IPAddress");
+		getLogger().info("VirtualIPAddress is set to " + IPAddressVirtual);
+		// Check config exists or set up if it doesn't
 		if (!configFile.exists()) {
 			getLogger().info("Plugin hasn't been configured so creating config");
-			getConfig().options().copyDefaults(true);
+			this.getConfig().options().copyDefaults(true);
 			//TODO Look at fixing ownership properly
 			configFile.getParentFile().mkdirs();
 			copy(getResource("config.yml"), configFile);
-			//TODO Write default IP address into file
+			String IPAddressFresh = this.getConfig().getString("LEDIPAddress.IPAddress");
+			getLogger().info("newIPAddress is set to " + IPAddressFresh);
 		} else {
 			getLogger().info("config file already exists");	
 			// Attempt to read config file
-			getConfig().options().copyDefaults(false);
-			getLogger().info("ConfigFile is " + configFile);
+			this.getConfig().options().copyDefaults(false);
+			String IPAddressExisting = this.getConfig().getString("LEDIPAddress.IPAddress");
+			getLogger().info("existingIPAddress is set to " + IPAddressExisting);
 		}
     	// Command to save once changed
     	//saveConfig();   	
