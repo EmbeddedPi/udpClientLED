@@ -14,3 +14,8 @@ commands:
       usage: /listLEDIPAddress 
       permission: op
       permission-message: No you don't, you just aren't worthy!
+   updateLEDIPAddress:
+      description: This will updatet the IP address if the config.yml has been manually edited.
+      usage: /updateLEDIPAddress 
+      permission: op
+      permission-message: Oh no you don't! 
