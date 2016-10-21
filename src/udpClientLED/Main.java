@@ -94,7 +94,8 @@ public final class Main extends JavaPlugin implements Listener {
     	    		sender.sendMessage("TEST IP address is set to " + args[0] + " and is reachable");
     	    		// Set new address and reload plugin
     	    		this.getConfig().set("LEDIPAddress.IPAddress", args[0]);
-    	    		saveConfig();   	
+    	    		saveConfig(); 
+    	    		reinitialiseLED();
     	    		return true;
     	    	} else {
     	    		// IP Address doesn't work
@@ -113,6 +114,7 @@ public final class Main extends JavaPlugin implements Listener {
     		return true;
     	} else if (cmd.getName().equalsIgnoreCase("updateLEDIPAddress")) {
     		updateLEDIPAddress();
+    		reinitialiseLED();
     		return true;
     	} else {
     		sender.sendMessage("Gibberish or a typo, either way it ain't happening");
@@ -182,6 +184,12 @@ public final class Main extends JavaPlugin implements Listener {
     		}
     	}
 
+    // Initialise LEd adfter IP Address change
+    private void reinitialiseLED() {
+		udpTransmit ("Red On");
+		updateLED();
+    }
+    
     // Update player LED status
     private void updateLED() {
     	if (local > 0) {
@@ -196,7 +204,7 @@ public final class Main extends JavaPlugin implements Listener {
     	else {
     		udpTransmit ("Green Off");		
     		}	
-    }
+    } 
     
     public void loadConfiguration() { 
 		// Create virtual config file
@@ -226,7 +234,6 @@ public final class Main extends JavaPlugin implements Listener {
     	//reloadConfig();
     }
     
-    //TODO Add an option to test the new address and revert if not reachable.
     /* Loads config.yml from disc and updates fields
      * 
      */
@@ -241,10 +248,11 @@ public final class Main extends JavaPlugin implements Listener {
 		    	String IPAddressUpdated = this.getConfig().getString("LEDIPAddress.IPAddress");
 				getLogger().info("updatedIPAddress is set to " + IPAddressUpdated);
 				saveConfig();
+				reinitialiseLED();
 			} else {
 	    		getLogger().info("IP address not working, keeping to previous");	
 	    		this.getConfig().set("LEDIPAddress.IPAddress", IPAddressTemp);
-	    		saveConfig();   
+	    		saveConfig();  
 	    	}
 		} catch (Exception e) {
         	//TODO Clarify this lazy cop out
