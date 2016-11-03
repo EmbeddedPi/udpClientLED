@@ -25,10 +25,11 @@ public final class Main extends JavaPlugin implements Listener {
 	private boolean recentJoin = false;
 	private String recentPlayerIP = "";
 	//TODO Delete this line after testing
-	private static final String udpServerIP = "192.168.1.34";
+	//private static final String udpServerIP = "192.168.1.34";
 	//TODO Make this line default after testing
-	//private String udpIPAddress;
+	private static String udpIPAddress;
 	// Default timeout for checking udp connection
+	// TODO Add these to the config file.
 	private static final int timeout=5000;
 	private static final int shortTimeout=500;
 	 
@@ -38,6 +39,7 @@ public final class Main extends JavaPlugin implements Listener {
 		getServer().getPluginManager().registerEvents(this, this);
 		// Load or initialise configuration file
 		loadConfiguration();
+		getLogger().info("Returned from loadConfiguration()");
 		String IPAddressLoaded = this.getConfig().getString("LEDIPAddress.IPAddress");
 		getLogger().info("loadedIPAddress is set to " + IPAddressLoaded);
 		// Indicate that plugin has started with a light display
@@ -80,13 +82,7 @@ public final class Main extends JavaPlugin implements Listener {
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {  	
     	if (cmd.getName().equalsIgnoreCase("setLEDIPAddress")) { 
     		// Check a single argument for IPAddress
-    		if (args.length < 1) {
-    			sender.sendMessage("Should have an argument!");
-    	        return false;
-    	    } else if (args.length >1) {
-    	    	sender.sendMessage("Calm down, too many arguments!");
- 	           	return false;
-    	    } else {
+    		if (checkArguments(args.length, sender)) {
     	    	// Check whether args[0] is a valid IP address
     	    	try {
     	    	InetAddress IPAddress = InetAddress.getByName(args[0]);
@@ -112,32 +108,53 @@ public final class Main extends JavaPlugin implements Listener {
     		String IPAddressListed = this.getConfig().getString("LEDIPAddress.IPAddress");
     		getLogger().info("loadedIPAddress is set to " + IPAddressListed);
     		return true;
-    	} else if (cmd.getName().equalsIgnoreCase("updateLEDIPAddress")) {
-    		updateLEDIPAddress();
+    	} else if (cmd.getName().equalsIgnoreCase("updateConfig")) {
+    		updateConfig();
     		reinitialiseLED();
     		return true;
-    	} else {
-    		sender.sendMessage("Gibberish or a typo, either way it ain't happening");
-    	return false; 
+    	} else if (cmd.getName().equalsIgnoreCase("setTimeout")) {
+    		if (checkArguments(args.length, sender)) {
+    			sender.sendMessage("You tried to set timeout to " + args[0]);
+    			//Check if args[0] is an integer then set timeout
+    			return true;
+    			//If not message sender and return false
+    		}
+    	} else if (cmd.getName().equalsIgnoreCase("setShortTimeout")) {
+    		if (checkArguments(args.length, sender)) {
+    			sender.sendMessage("You tried to set shorttimeout to " + args[0]);
+    			//Check if args[0] is an integer then set timeout
+    			return true;
+    			//If not message sender and return false
+    	} 
+    	sender.sendMessage("Gibberish or a typo, either way it ain't happening");
+        return false;
     	}
+    	return false;
     }
 
-	public static void udpTransmit(String message) {
+	public void udpTransmit(String message) {
+	getLogger().info("Starting udpTransmit()");
     try {
        //BufferedReader inFromUser =
        //  new BufferedReader(new InputStreamReader(System.in));
        DatagramSocket clientSocket = new DatagramSocket();
-       InetAddress IPAddress = InetAddress.getByName(udpServerIP);
+       InetAddress IPAddress = InetAddress.getByName(udpIPAddress);
        byte[] sendData = new byte[16];
        byte[] receiveData = new byte[16];
        // String sentence = inFromUser.readLine();
        if (IPAddress.isReachable(shortTimeout)) {
-    	   System.out.println(udpServerIP + " is reachable");
+    	   System.out.println(udpIPAddress + " is reachable");
 	       sendData = message.getBytes();
+	       System.out.println("Attempting to transmit from within udpTransmit");
 	       DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
 	       clientSocket.send(sendPacket);
+	       System.out.println("Transmitted from within udpTransmit");
+	       //TODO Hangs here if reply not received
 	       DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+	       System.out.println("Set to receive packet from within udpTransmit");
+	     //TODO Hangs here if reply not received
 	       clientSocket.receive(receivePacket);
+	       System.out.println("Received from within udpTransmit");
 	       InetAddress IPAddressRec = receivePacket.getAddress();
 	       int port = receivePacket.getPort();
 	       System.out.println("Got this from " + IPAddressRec + " @ port " + port);
@@ -146,7 +163,7 @@ public final class Main extends JavaPlugin implements Listener {
 	       System.out.println("IPAddress = " + IPAddress);
        	clientSocket.close();
        } else {
-		   System.out.println(udpServerIP + " is not reachable");
+		   System.out.println(udpIPAddress + " is not reachable");
 	   }
     	}
     catch (Exception e) {
@@ -184,7 +201,7 @@ public final class Main extends JavaPlugin implements Listener {
     		}
     	}
 
-    // Initialise LEd adfter IP Address change
+    // Initialise LEd after IP Address change
     private void reinitialiseLED() {
 		udpTransmit ("Red On");
 		updateLED();
@@ -208,9 +225,8 @@ public final class Main extends JavaPlugin implements Listener {
     
     public void loadConfiguration() { 
 		// Create virtual config file
+    	getLogger().info("Starting loadConfiguration()");
     	File configFile = new File(getDataFolder(), "config.yml");
-		String IPAddressVirtual = this.getConfig().getString("LEDIPAddress.IPAddress");
-		getLogger().info("VirtualIPAddress is set to " + IPAddressVirtual);
 		// Check config exists or set up if it doesn't
 		if (!configFile.exists()) {
 			getLogger().info("Plugin hasn't been configured so creating config");
@@ -218,26 +234,39 @@ public final class Main extends JavaPlugin implements Listener {
 			//TODO Look at fixing ownership properly
 			configFile.getParentFile().mkdirs();
 			copy(getResource("config.yml"), configFile);
-			String IPAddressFresh = this.getConfig().getString("LEDIPAddress.IPAddress");
-			getLogger().info("freshIPAddress is set to " + IPAddressFresh);
+			//Assign IP address directly as plugin default loopback IP so safe
+			String udpIPAddress = this.getConfig().getString("LEDIPAddress.IPAddress");
+			getLogger().info("freshIPAddress is set to " + udpIPAddress);
 		} else {
-			//TODO Check that IPAddress is valid as could have been changed to an invalid value
 			getLogger().info("config file already exists");	
 			// Attempt to read config file
 			this.getConfig().options().copyDefaults(false);
-			String IPAddressExisting = this.getConfig().getString("LEDIPAddress.IPAddress");
-			getLogger().info("existingIPAddress is set to " + IPAddressExisting);
+			String newIPAddress = this.getConfig().getString("LEDIPAddress.IPAddress");
+			getLogger().info("newFromFileIPAddress is set to " + newIPAddress);
+			try {
+				//Test this new address first as tempIPAddress
+				InetAddress tempIPAddress = InetAddress.getByName(newIPAddress);
+				if (tempIPAddress.isReachable(timeout)) {
+					System.out.println(tempIPAddress + " is reachable");
+					udpIPAddress = newIPAddress;
+					getLogger().info("IPAddress is now set to " + udpIPAddress);
+				} else {
+					System.out.println(tempIPAddress + " is not reachable");
+					//TODO Revert to loaded IP Address and test again
+					//TODO Force reload defaults from config if previous also fails
+				//udpIPAddress	
+				}
+			} catch (Exception e) {
+				    	//TODO Better error handling than this lazy cop out
+				    	e.printStackTrace();
+			}
 		}
-    	// Command to save once changed
-    	//saveConfig();   	
-    	// Command to reload
-    	//reloadConfig();
     }
     
     /* Loads config.yml from disc and updates fields
      * 
      */
-    private void updateLEDIPAddress() {
+    private void updateConfig() {
     	String IPAddressTemp = this.getConfig().getString("LEDIPAddress.IPAddress");
     	reloadConfig();
 		String Proposed = this.getConfig().getString("LEDIPAddress.IPAddress");
@@ -274,5 +303,18 @@ public final class Main extends JavaPlugin implements Listener {
         	//TODO Clarify this lazy cop out
             e.printStackTrace();
         }
+    }
+    
+    private Boolean checkArguments (Integer args, CommandSender sender) {
+    	if (args < 1) {
+			sender.sendMessage("Should have an argument!");
+	        return false;
+	    } else if (args >1) {
+	    	sender.sendMessage("Calm down, too many arguments!");
+	        return false;
+	    } else {
+	    	return true;
+	    }
+	    	
     }
 }
