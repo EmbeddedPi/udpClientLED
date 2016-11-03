@@ -1,18 +1,12 @@
 # ----------------------------------------------------
-
 # This config holds the IP address of the Raspberry Pi
-
 # running udpServerLED where the status information is
-
 # sent to.
 
 # Edit to set new IP address and alter timeout settings
 # Run updateConfig after altering to update settings
 # ----------------------------------------------------
-
 LEDIPAddress:
-
   IPAddress: '127.0.0.1'
-
   timeout: 5000
   shortTimeout: 500

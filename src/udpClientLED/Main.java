@@ -8,6 +8,8 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketTimeoutException;
+
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import java.io.File;
@@ -104,9 +106,13 @@ public final class Main extends JavaPlugin implements Listener {
     	    		return false;
     	    	}
     	    }
-    	} else if (cmd.getName().equalsIgnoreCase("listLEDIPAddress")) {
+    	} else if (cmd.getName().equalsIgnoreCase("listConfig")) {
     		String IPAddressListed = this.getConfig().getString("LEDIPAddress.IPAddress");
-    		getLogger().info("loadedIPAddress is set to " + IPAddressListed);
+    		String timeoutListed = this.getConfig().getString("LEDIPAddress.timeout");
+    		String shortTimeoutListed = this.getConfig().getString("LEDIPAddress.shortTimeout");    		
+    		sender.sendMessage("loadedIPAddress is set to " + IPAddressListed);
+    		sender.sendMessage("timeout is set to " + timeoutListed);
+    		sender.sendMessage("shortTimeout is set to " + shortTimeoutListed);
     		return true;
     	} else if (cmd.getName().equalsIgnoreCase("updateConfig")) {
     		updateConfig();
@@ -132,36 +138,45 @@ public final class Main extends JavaPlugin implements Listener {
     	return false;
     }
 
-	public void udpTransmit(String message) {
+	public void udpTransmit(String message) {		
 	getLogger().info("Starting udpTransmit()");
-    try {
-       //BufferedReader inFromUser =
-       //  new BufferedReader(new InputStreamReader(System.in));
-       DatagramSocket clientSocket = new DatagramSocket();
-       InetAddress IPAddress = InetAddress.getByName(udpIPAddress);
-       byte[] sendData = new byte[16];
-       byte[] receiveData = new byte[16];
-       // String sentence = inFromUser.readLine();
-       if (IPAddress.isReachable(shortTimeout)) {
-    	   System.out.println(udpIPAddress + " is reachable");
-	       sendData = message.getBytes();
-	       System.out.println("Attempting to transmit from within udpTransmit");
-	       DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
-	       clientSocket.send(sendPacket);
-	       System.out.println("Transmitted from within udpTransmit");
-	       //TODO Hangs here if reply not received
-	       DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-	       System.out.println("Set to receive packet from within udpTransmit");
-	     //TODO Hangs here if reply not received
-	       clientSocket.receive(receivePacket);
-	       System.out.println("Received from within udpTransmit");
-	       InetAddress IPAddressRec = receivePacket.getAddress();
-	       int port = receivePacket.getPort();
-	       System.out.println("Got this from " + IPAddressRec + " @ port " + port);
-	       String modifiedSentence = new String(receivePacket.getData());
-	       System.out.println("FROM SERVER:" + modifiedSentence);
-	       System.out.println("IPAddress = " + IPAddress);
-       	clientSocket.close();
+	// Ignore if loopback address
+	/* Make Live after testing
+	if (!udpIPAddress.equals("127.0.0.1")) {
+	 * 
+	 */
+		byte[] sendData = new byte[16];
+		byte[] receiveData = new byte[16];
+		// String sentence = inFromUser.readLine();
+		try {
+			DatagramSocket clientSocket = new DatagramSocket();
+			clientSocket.setSoTimeout(timeout);
+			InetAddress IPAddress = InetAddress.getByName(udpIPAddress);
+			if (IPAddress.isReachable(shortTimeout)) {
+				System.out.println(udpIPAddress + " is reachable");
+				sendData = message.getBytes();
+				System.out.println("Attempting to transmit from within udpTransmit");
+				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
+				clientSocket.send(sendPacket);
+				System.out.println("Transmitted from within udpTransmit");
+				//TODO Hangs here if reply not received
+				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+				System.out.println("Set to receive packet from within udpTransmit");
+				//TODO Hangs here if reply not received
+				try {
+					clientSocket.receive(receivePacket);
+					System.out.println("Received from within udpTransmit");
+					InetAddress IPAddressRec = receivePacket.getAddress();
+					int port = receivePacket.getPort();
+					System.out.println("Got this from " + IPAddressRec + " @ port " + port);
+					String modifiedSentence = new String(receivePacket.getData());
+					System.out.println("FROM SERVER:" + modifiedSentence);
+					System.out.println("IPAddress = " + IPAddress);
+				} catch (SocketTimeoutException e) {
+					//Timeout waiting for reply
+					System.out.println("Didn't get a reply within timeout");
+				}
+       		clientSocket.close();
        } else {
 		   System.out.println(udpIPAddress + " is not reachable");
 	   }
@@ -170,8 +185,15 @@ public final class Main extends JavaPlugin implements Listener {
     	//TODO Better error handling than this lazy cop out
     	e.printStackTrace();
     	}
-    }
-    
+	// If loopback address
+    /* Make live after testing
+	//} else {
+		//Loopback default of 127.0.0.1 so don't bother
+		//System.out.println("IP Address is still set to default of 127.0.0.1. Not transmitting.");
+		System.out.println("IudpTransmit is ignoring this");
+	}
+	*/
+	}
     // Determine player location
     private void isLocal() {
     	// Set local variables and count
@@ -252,9 +274,11 @@ public final class Main extends JavaPlugin implements Listener {
 					getLogger().info("IPAddress is now set to " + udpIPAddress);
 				} else {
 					System.out.println(tempIPAddress + " is not reachable");
-					//TODO Revert to loaded IP Address and test again
-					//TODO Force reload defaults from config if previous also fails
-				//udpIPAddress	
+					System.out.println("Reverting to loopback default of 127.0.0.1");
+					//TODO make this reload from config defaults
+					udpIPAddress = "127.0.0.1";
+					saveConfig();
+					//TODO Force reload defaults from config if previous also fails	
 				}
 			} catch (Exception e) {
 				    	//TODO Better error handling than this lazy cop out

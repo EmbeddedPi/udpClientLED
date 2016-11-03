@@ -9,9 +9,9 @@ commands:
       usage: /setLEDIPAddress [ipAddress]
       permission: op
       permission-message: No you don't, your level of omnipotency is sadly lacking!
-   listLEDIPAddress:
+   listConfig:
       description: This list the current IP address to send LED status updates to.
-      usage: /listLEDIPAddress 
+      usage: /listConfig 
       permission: op
       permission-message: No you don't, you just aren't worthy!
    updateConfig:
