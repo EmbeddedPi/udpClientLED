@@ -197,6 +197,7 @@ public final class Main extends JavaPlugin implements Listener {
     // Determine player location
     private void isLocal() {
     	// Set local variables and count
+    	// Count players coming from router's address as external
     	if (recentPlayerIP.equals("192.168.1.1")) {
     		if (recentJoin) {
     			notLocal++;
@@ -204,7 +205,8 @@ public final class Main extends JavaPlugin implements Listener {
     			else {
     			notLocal--;
     			}
-    		} 	
+    		}
+    	//Any other addresses starting with 192.168.1 are internal
     	else if (recentPlayerIP.startsWith("192.168.1")) {
     		if (recentJoin) {
     			local++;
@@ -213,6 +215,7 @@ public final class Main extends JavaPlugin implements Listener {
     		local--;
     			}
     		}
+    	// Anything else is external
     	else {
     		if (recentJoin) {
     			notLocal++;
