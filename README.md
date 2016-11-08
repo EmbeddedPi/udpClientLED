@@ -8,8 +8,7 @@ The combined application displays the status of a Minecraft server on external L
 
 Usage
 =====
-This repository is a Maven project based on source code built in Eclipse. If you just want to build it without delving into the code then 
-just download the completed plugin .jar from the latest release.
+This repository is a Maven project based on source code built in Eclipse. If you just want to build it without delving into the code then just download the completed plugin .jar from the latest release.
 
 udpServerLED runs on the RaspberryPi and needs  manually invoking, example below
 sudo java -jar udpServerLED-0.1.jar
@@ -21,18 +20,25 @@ Once loaded the IP address of the Raspberry will need to be configured. This can
 
 The first is to edit the config.yml file in the plugins\udpClientLED folder that will be created when the plugin is first run. Follow this by executing the updateConfig command (requires op permissions). Take care that although simply reloading the plugin will have the same effect, in this case the plugin will be unable to revert back to last known configuration if the newly set address cannot be reached and will revert to the loopback default of 127.0.0.1.
 
-The second is via the setLEDIPAddress [ipAddress] command. Both of these methods will revert to the previously set IP address if the new one is not reachable in a set time out (5 seconds).
+The second is via the setUDPIPAddress [ipAddress] command. This method will revert to the previously set IP address if the new one is not reachable in a set time out (default is 5 seconds).
 
-Finally, the listLEDIPAddress command will show the currently set IP address
+There are two configurable timeout settings. These can be altered to fine tune response times for the network.
 
-TBC
+setUDPTimeout [integer] (default 5000) is used when contacting a newly set IP address for the first time.
+setUDPShortTimeout [integer] (default 500) is used when communicating with a known contactable IP address.
+
+Finally, the listUDPConfig command will show the current settings.
+
+
+Releases
+--------
 [https://github.com/EmbeddedPi/udpClientLED/releases](https://github.com/EmbeddedPi/udpClientLED/releases)
 
 
 Current status
 ==============
 udpServerLED is tested and working. udpClientLED is currently migrating to using a config file and under testing.
-The plugin assumes that the loacl network addresses are of the form 192.168.1.x
+The plugin assumes that the local network addresses are of the form 192.168.1.x
 
 
 Hardware

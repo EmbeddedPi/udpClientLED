@@ -26,14 +26,11 @@ public final class Main extends JavaPlugin implements Listener {
 	private short notLocal = 0;
 	private boolean recentJoin = false;
 	private String recentPlayerIP = "";
-	//TODO Delete this line after testing
 	//private static final String udpServerIP = "192.168.1.34";
-	//TODO Make this line default after testing
 	private static String udpIPAddress;
 	// Default timeout for checking udp connection
-	// TODO Add these to the config file.
-	private static final int timeout=5000;
-	private static final int shortTimeout=500;
+	private static int timeout;
+	private static int shortTimeout;
 	 
 	@Override
     public void onEnable() {
@@ -79,69 +76,80 @@ public final class Main extends JavaPlugin implements Listener {
     	updateLED();
     }
    
-    //TODO Sort this out
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {  	
-    	if (cmd.getName().equalsIgnoreCase("setLEDIPAddress")) { 
+    	if (cmd.getName().equalsIgnoreCase("setUDPIPAddress")) { 
     		// Check a single argument for IPAddress
     		if (checkArguments(args.length, sender)) {
-    	    	// Check whether args[0] is a valid IP address
     	    	try {
-    	    	InetAddress IPAddress = InetAddress.getByName(args[0]);
-    	    	if (IPAddress.isReachable(timeout)) {
-    	    		sender.sendMessage("TEST IP address is set to " + args[0] + " and is reachable");
-    	    		// Set new address and reload plugin
-    	    		this.getConfig().set("LEDIPAddress.IPAddress", args[0]);
-    	    		saveConfig(); 
-    	    		reinitialiseLED();
-    	    		return true;
-    	    	} else {
-    	    		// IP Address doesn't work
-    	    		sender.sendMessage("TEST IP address is set to " + args[0] + " and is not reachable");
-    	    		return false;
-    	    	}
+    	    		// Check whether args[0] is a valid IP address
+    	    		InetAddress IPAddress = InetAddress.getByName(args[0]);
+    	    		if (IPAddress.isReachable(timeout)) {
+    	    			sender.sendMessage("IP address is set to " + args[0] + " and is reachable");
+    	    			// Set new address and reload plugin
+    	    			this.getConfig().set("LEDIPAddress.IPAddress", args[0]);
+    	    			saveConfig(); 
+    	    			reinitialiseLED();
+    	    			return true;
+    	    		} else {
+    	    			// IP Address doesn't work
+    	    			sender.sendMessage("Trying to set IP address is set to " + args[0] + " and is not reachable");
+    	    			sender.sendMessage("This is not reachable so settings won't be updated.");
+    	    			// Don't bother changing address
+    	    			return false;
+    	    		}
     	    	} catch (Exception e){
     	    		//TODO Better error handling than this lazy cop out
     	    		e.printStackTrace();
     	    		return false;
     	    	}
+    		} else {
+    			return false;
     	    }
-    	} else if (cmd.getName().equalsIgnoreCase("listConfig")) {
+    	} else if (cmd.getName().equalsIgnoreCase("listUDPConfig")) {
     		String IPAddressListed = this.getConfig().getString("LEDIPAddress.IPAddress");
     		String timeoutListed = this.getConfig().getString("LEDIPAddress.timeout");
     		String shortTimeoutListed = this.getConfig().getString("LEDIPAddress.shortTimeout");    		
-    		sender.sendMessage("loadedIPAddress is set to " + IPAddressListed);
+    		sender.sendMessage("IPAddress is set to " + IPAddressListed);
     		sender.sendMessage("timeout is set to " + timeoutListed);
     		sender.sendMessage("shortTimeout is set to " + shortTimeoutListed);
     		return true;
-    	} else if (cmd.getName().equalsIgnoreCase("updateConfig")) {
+    	} else if (cmd.getName().equalsIgnoreCase("updateUDPConfig")) {
     		updateConfig();
     		reinitialiseLED();
     		return true;
-    	} else if (cmd.getName().equalsIgnoreCase("setTimeout")) {
-    		if (checkArguments(args.length, sender)) {
-    			sender.sendMessage("You tried to set timeout to " + args[0]);
-    			//Check if args[0] is an integer then set timeout
+    	} else if (cmd.getName().equalsIgnoreCase("setUDPTimeout")) {
+    		//Ensure args[0] is an integer then set timeout
+    		if (checkArguments(args.length, sender) && isInteger(args[0])) {
+    			sender.sendMessage("Timeout set to " + args[0]);
+    			this.getConfig().set("LEDIPAddress.timeout", args[0]);
     			return true;
     			//If not message sender and return false
+    		} else {
+    			sender.sendMessage(args[0] + " isn't a valid integer so ignoring.");
+    			return false;
     		}
-    	} else if (cmd.getName().equalsIgnoreCase("setShortTimeout")) {
-    		if (checkArguments(args.length, sender)) {
-    			sender.sendMessage("You tried to set shorttimeout to " + args[0]);
-    			//Check if args[0] is an integer then set timeout
+    	} else if (cmd.getName().equalsIgnoreCase("setUDPShortTimeout")) {
+    		//Ensure args[0] is an integer then set shorttimeout
+    		if (checkArguments(args.length, sender) && isInteger(args[0])) {
+    			sender.sendMessage("Shorttimeout set to " + args[0]);
+    			this.getConfig().set("LEDIPAddress.shortTimeout", args[0]);
     			return true;
     			//If not message sender and return false
-    	} 
+    		} else {
+    			sender.sendMessage(args[0] + " isn't a valid integer so ignoring.");
+    			return false;
+    		}
+    	} else {
     	sender.sendMessage("Gibberish or a typo, either way it ain't happening");
         return false;
     	}
-    	return false;
     }
 
 	public void udpTransmit(String message) {		
 	getLogger().info("Starting udpTransmit()");
 	// Ignore if loopback address
-	/* Make Live after testing
+	/* Make live after testing
 	if (!udpIPAddress.equals("127.0.0.1")) {
 	 * 
 	 */
@@ -155,17 +163,13 @@ public final class Main extends JavaPlugin implements Listener {
 			if (IPAddress.isReachable(shortTimeout)) {
 				System.out.println(udpIPAddress + " is reachable");
 				sendData = message.getBytes();
-				System.out.println("Attempting to transmit from within udpTransmit");
 				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
 				clientSocket.send(sendPacket);
-				System.out.println("Transmitted from within udpTransmit");
-				//TODO Hangs here if reply not received
 				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 				System.out.println("Set to receive packet from within udpTransmit");
-				//TODO Hangs here if reply not received
+				//Hangs here if reply not received
 				try {
 					clientSocket.receive(receivePacket);
-					System.out.println("Received from within udpTransmit");
 					InetAddress IPAddressRec = receivePacket.getAddress();
 					int port = receivePacket.getPort();
 					System.out.println("Got this from " + IPAddressRec + " @ port " + port);
@@ -252,6 +256,11 @@ public final class Main extends JavaPlugin implements Listener {
 		// Create virtual config file
     	getLogger().info("Starting loadConfiguration()");
     	File configFile = new File(getDataFolder(), "config.yml");
+    	// Set defaults as variables that can be reverted to if necessary
+    	String defaultIPAddress = this.getConfig().getString("LEDIPAddress.IPAddress");
+    	//TODO Check what happens if these don't return integers
+    	Integer defaultTimeout = this.getConfig().getInt("LEDIPAddress.timeout");
+    	Integer defaultShortTimeout = this.getConfig().getInt("LEDIPAddress.shortTimeout");
 		// Check config exists or set up if it doesn't
 		if (!configFile.exists()) {
 			getLogger().info("Plugin hasn't been configured so creating config");
@@ -261,6 +270,9 @@ public final class Main extends JavaPlugin implements Listener {
 			copy(getResource("config.yml"), configFile);
 			//Assign IP address directly as plugin default loopback IP so safe
 			String udpIPAddress = this.getConfig().getString("LEDIPAddress.IPAddress");
+			//Similarly assign timeouts from defaults
+			timeout = defaultTimeout;
+			shortTimeout = defaultShortTimeout;
 			getLogger().info("freshIPAddress is set to " + udpIPAddress);
 		} else {
 			getLogger().info("config file already exists");	
@@ -268,6 +280,18 @@ public final class Main extends JavaPlugin implements Listener {
 			this.getConfig().options().copyDefaults(false);
 			String newIPAddress = this.getConfig().getString("LEDIPAddress.IPAddress");
 			getLogger().info("newFromFileIPAddress is set to " + newIPAddress);
+			//TDODO check whether these fail if values aren't integers
+			Integer newTimeout = this.getConfig().getInt("LEDIPAddress.timeout");
+			Integer newShortTimeout = this.getConfig().getInt("LEDIPAddress.shortTimeout");
+			//TODO If all is fine then assign
+			timeout = newTimeout;
+			shortTimeout = newShortTimeout;
+			/*
+			 * If values aren't valid then assign defaults
+			 * timeout = defaultTimeout;
+			 * shortTimeout = defaultShortTimeout;
+			 * 
+			 */
 			try {
 				//Test this new address first as tempIPAddress
 				InetAddress tempIPAddress = InetAddress.getByName(newIPAddress);
@@ -278,15 +302,14 @@ public final class Main extends JavaPlugin implements Listener {
 				} else {
 					System.out.println(tempIPAddress + " is not reachable");
 					System.out.println("Reverting to loopback default of 127.0.0.1");
-					//TODO make this reload from config defaults
-					udpIPAddress = "127.0.0.1";
+					udpIPAddress = defaultIPAddress;
 					saveConfig();
-					//TODO Force reload defaults from config if previous also fails	
 				}
 			} catch (Exception e) {
 				    	//TODO Better error handling than this lazy cop out
 				    	e.printStackTrace();
 			}
+			
 		}
     }
     
@@ -295,6 +318,8 @@ public final class Main extends JavaPlugin implements Listener {
      */
     private void updateConfig() {
     	String IPAddressTemp = this.getConfig().getString("LEDIPAddress.IPAddress");
+    	Integer timeoutTemp = this.getConfig().getInt("LEDIPAddress.timeout");
+    	Integer shortTimeoutTemp = this.getConfig().getInt("LEDIPAddress.shortTimeout");
     	reloadConfig();
 		String Proposed = this.getConfig().getString("LEDIPAddress.IPAddress");
 		try {
@@ -314,6 +339,17 @@ public final class Main extends JavaPlugin implements Listener {
         	//TODO Clarify this lazy cop out
             e.printStackTrace();
     	}
+		//TODO Check if timeout values are valid
+		
+		/*
+		 * if (timeout values are valid) {
+		 * timeout = timeoutUpdated;
+		 * shortTimeout = shortTimeoutUpdated;
+		 * } else {
+		 * timeout = timeoutTemp;
+		 * shortTimeout = shortTimeoutTemp;
+		 * }
+		 */
     }
     
     private void copy(InputStream in, File file) {
@@ -343,5 +379,29 @@ public final class Main extends JavaPlugin implements Listener {
 	    	return true;
 	    }
 	    	
+    }
+    
+    private static boolean isInteger(String str) {
+        if (str == null) {
+            return false;
+        }
+        int length = str.length();
+        if (length == 0) {
+            return false;
+        }
+        int i = 0;
+        if (str.charAt(0) == '-') {
+            if (length == 1) {
+                return false;
+            }
+            i = 1;
+        }
+        for (; i < length; i++) {
+            char c = str.charAt(i);
+            if (c < '0' || c > '9') {
+                return false;
+            }
+        }
+        return true;
     }
 }

@@ -1,31 +1,31 @@
 name: udpClientLED
 main: udpClientLED.Main
-version: 0.1
+version: 0.3
 author: EmbeddedPi
 description: In conjunction udpServerLED, this plugin uses a traffic light LED system to indicate server status on and external RaspberryPi.
 commands:
-   setLEDIPAddress:
+   setUDPIPAddress:
       description: This sets the IP address to send LED status updates to.
-      usage: /setLEDIPAddress [ipAddress]
+      usage: /setUDPIPAddress [ipAddress]
       permission: op
       permission-message: No you don't, your level of omnipotency is sadly lacking!
-   listConfig:
+   listUDPConfig:
       description: This list the current IP address to send LED status updates to.
-      usage: /listConfig 
+      usage: /listUDPConfig 
       permission: op
       permission-message: No you don't, you just aren't worthy!
-   updateConfig:
+   updateUDPConfig:
       description: This will update the IP address or timeout settings if the config.yml has been manually edited.
-      usage: /updateConfig 
+      usage: /updateUDPConfig 
       permission: op
       permission-message: Oh no you don't! 
-   setTimeout:
+   setUDPTimeout:
       description: This will alter the initial timeout settings when first trying a new IP address.
-      usage: /setTimeout [timeout in milliseconds] default 5000
+      usage: /setUDPTimeout [timeout in milliseconds] default 5000
       permission: op
       permission-message: No chance! 
-   setShortTimeout:
+   setUDPShortTimeout:
       description: This will alter the timeout settings for a previously confirmed IP address.
-      usage: /setShortTimeout [timeout in milliseconds] default 500
+      usage: /setUDPShortTimeout [timeout in milliseconds] default 500
       permission: op
       permission-message: As if! 
