@@ -9,7 +9,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
-
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import java.io.File;
@@ -26,10 +25,11 @@ public final class Main extends JavaPlugin implements Listener {
 	private short notLocal = 0;
 	private boolean recentJoin = false;
 	private String recentPlayerIP = "";
-	//private static final String udpServerIP = "192.168.1.34";
+	//Don't initialise as this is set by file or config defaults
 	private static String udpIPAddress;
-	// Default timeout for checking udp connection
+	// Default timeout for checking new udp connection
 	private static int timeout;
+	//Default timeout for checking known good connections
 	private static int shortTimeout;
 	 
 	@Override
@@ -77,7 +77,10 @@ public final class Main extends JavaPlugin implements Listener {
     }
    
     @Override
-    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {  	
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+    	/* TODO
+    	 * This writes to file but doesn't update loaded config
+    	 */
     	if (cmd.getName().equalsIgnoreCase("setUDPIPAddress")) { 
     		// Check a single argument for IPAddress
     		if (checkArguments(args.length, sender)) {
@@ -118,6 +121,9 @@ public final class Main extends JavaPlugin implements Listener {
     		updateConfig();
     		reinitialiseLED();
     		return true;
+    	/* TODO
+    	 * This works but doesn't write to file and updateConfig resets to default
+    	 */
     	} else if (cmd.getName().equalsIgnoreCase("setUDPTimeout")) {
     		//Ensure args[0] is an integer then set timeout
     		if (checkArguments(args.length, sender) && isInteger(args[0])) {
@@ -129,6 +135,9 @@ public final class Main extends JavaPlugin implements Listener {
     			sender.sendMessage(args[0] + " isn't a valid integer so ignoring.");
     			return false;
     		}
+    	/* TODO
+    	 * This works but doesn't write to file and updateConfig resets to default
+    	 */
     	} else if (cmd.getName().equalsIgnoreCase("setUDPShortTimeout")) {
     		//Ensure args[0] is an integer then set shorttimeout
     		if (checkArguments(args.length, sender) && isInteger(args[0])) {
@@ -152,6 +161,7 @@ public final class Main extends JavaPlugin implements Listener {
 	/* Make live after testing
 	if (!udpIPAddress.equals("127.0.0.1")) {
 	 * 
+	 * Note that 127.x.x.x is also reachable but not valid
 	 */
 		byte[] sendData = new byte[16];
 		byte[] receiveData = new byte[16];
@@ -193,11 +203,11 @@ public final class Main extends JavaPlugin implements Listener {
     /* Make live after testing
 	//} else {
 		//Loopback default of 127.0.0.1 so don't bother
-		//System.out.println("IP Address is still set to default of 127.0.0.1. Not transmitting.");
-		System.out.println("IudpTransmit is ignoring this");
+		System.out.println("IP Address is still set to default of 127.0.0.1. Not transmitting.");
 	}
 	*/
 	}
+	
     // Determine player location
     private void isLocal() {
     	// Set local variables and count
@@ -233,6 +243,8 @@ public final class Main extends JavaPlugin implements Listener {
     // Initialise LEd after IP Address change
     private void reinitialiseLED() {
 		udpTransmit ("Red On");
+		udpTransmit ("Amber Off");
+		udpTransmit ("Green Off");		
 		updateLED();
     }
     
@@ -250,8 +262,11 @@ public final class Main extends JavaPlugin implements Listener {
     	else {
     		udpTransmit ("Green Off");		
     		}	
-    } 
+    }
     
+    /*
+     * This reads from changed values fine (IPAddress)
+     */
     public void loadConfiguration() { 
 		// Create virtual config file
     	getLogger().info("Starting loadConfiguration()");
@@ -286,7 +301,7 @@ public final class Main extends JavaPlugin implements Listener {
 			//TODO If all is fine then assign
 			timeout = newTimeout;
 			shortTimeout = newShortTimeout;
-			/*
+			/* TODO
 			 * If values aren't valid then assign defaults
 			 * timeout = defaultTimeout;
 			 * shortTimeout = defaultShortTimeout;
@@ -308,8 +323,7 @@ public final class Main extends JavaPlugin implements Listener {
 			} catch (Exception e) {
 				    	//TODO Better error handling than this lazy cop out
 				    	e.printStackTrace();
-			}
-			
+			}		
 		}
     }
     
@@ -319,7 +333,9 @@ public final class Main extends JavaPlugin implements Listener {
     private void updateConfig() {
     	String IPAddressTemp = this.getConfig().getString("LEDIPAddress.IPAddress");
     	Integer timeoutTemp = this.getConfig().getInt("LEDIPAddress.timeout");
+    	System.out.println("updateConfigTimeoutTemp is " + timeoutTemp);
     	Integer shortTimeoutTemp = this.getConfig().getInt("LEDIPAddress.shortTimeout");
+    	System.out.println("updateConfigShortTimeoutTemp is " + shortTimeoutTemp);
     	reloadConfig();
 		String Proposed = this.getConfig().getString("LEDIPAddress.IPAddress");
 		try {
@@ -339,8 +355,7 @@ public final class Main extends JavaPlugin implements Listener {
         	//TODO Clarify this lazy cop out
             e.printStackTrace();
     	}
-		//TODO Check if timeout values are valid
-		
+		//TODO Check if timeout values are valid		
 		/*
 		 * if (timeout values are valid) {
 		 * timeout = timeoutUpdated;
@@ -377,8 +392,7 @@ public final class Main extends JavaPlugin implements Listener {
 	        return false;
 	    } else {
 	    	return true;
-	    }
-	    	
+	    } 	
     }
     
     private static boolean isInteger(String str) {
