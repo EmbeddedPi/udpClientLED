@@ -8,7 +8,9 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+//import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import java.io.File;
@@ -23,13 +25,14 @@ public final class Main extends JavaPlugin implements Listener {
 	
 	private short local = 0;
 	private short notLocal = 0;
-	private boolean recentJoin = false;
-	private String recentPlayerIP = "";
-	//Don't initialise as this is set by file or config defaults
+	// private boolean recentJoin = false;
+	InetAddress recentPlayerIP = null;
+	// private String recentPlayerIP = "";
+	// Don't initialise as this is set by file or config defaults
 	private static String udpIPAddress;
 	// Default timeout for checking new udp connection
 	private static int timeout;
-	//Default timeout for checking known good connections
+	// Default timeout for checking known good connections
 	private static int shortTimeout;
 	 
 	@Override
@@ -45,6 +48,7 @@ public final class Main extends JavaPlugin implements Listener {
 		udpTransmit ("Funky Disco");
 		getLogger().info("udpClientLED is switched on."); 
 		udpTransmit ("Red On");
+		//TODO Check if any players are already logged in and adjust local count accordingly
 	}
  
     @Override
@@ -56,22 +60,37 @@ public final class Main extends JavaPlugin implements Listener {
     
     // Someone joins server
     @EventHandler
-    public void onLogin(PlayerJoinEvent event) {
+    public void onLogin(PlayerJoinEvent event) throws UnknownHostException {
     	// Check whether internal or external IP address
-    	recentPlayerIP = event.getPlayer().getAddress().getHostString();
-    	recentJoin = true;
-    	isLocal();
+    	// recentPlayerIP = event.getPlayer().getAddress().getHostString();
+    	recentPlayerIP = event.getPlayer().getAddress().getAddress();   	
+    	if(isLocal(recentPlayerIP)) {
+    		local++;
+    		event.getPlayer().sendMessage(event.getPlayer().getName() +" is local.");
+    	} else {
+    		notLocal++;
+    		event.getPlayer().sendMessage(event.getPlayer().getName() +" is not local.");
+    	}
+    	//recentJoin = true;
+    	// isLocal();
     	// Update local/notLocal LED status according
     	updateLED();
     }
     
     // Someone leaves server
     @EventHandler
-    public void onLogout(PlayerQuitEvent event) {
+    public void onLogout(PlayerQuitEvent event) throws UnknownHostException {
     	// Check whether internal or external IP address
-    	recentPlayerIP = event.getPlayer().getAddress().getHostString();
-    	recentJoin = false;
-    	isLocal();
+    	// recentPlayerIP = event.getPlayer().getAddress().getHostString();
+    	recentPlayerIP = event.getPlayer().getAddress().getAddress();   	
+    	if(isLocal(recentPlayerIP)) {
+    		local--;
+    		
+    	} else {
+    		notLocal--;
+    	}
+    	//recentJoin = false;
+    	//isLocal();
     	// Update local/notLocal LED status according
     	updateLED();
     }
@@ -83,7 +102,7 @@ public final class Main extends JavaPlugin implements Listener {
     	 */
     	if (cmd.getName().equalsIgnoreCase("setUDPIPAddress")) { 
     		// Check a single argument for IPAddress
-    		if (checkArguments(args.length, sender)) {
+    		if (checkArguments(args.length, sender, 1)) {
     	    	try {
     	    		// Check whether args[0] is a valid IP address
     	    		InetAddress IPAddress = InetAddress.getByName(args[0]);
@@ -125,28 +144,40 @@ public final class Main extends JavaPlugin implements Listener {
     	 * This works but doesn't write to file and updateConfig resets to default
     	 */
     	} else if (cmd.getName().equalsIgnoreCase("setUDPTimeout")) {
-    		//Ensure args[0] is an integer then set timeout
-    		if (checkArguments(args.length, sender) && isInteger(args[0])) {
-    			sender.sendMessage("Timeout set to " + args[0]);
-    			this.getConfig().set("LEDIPAddress.timeout", args[0]);
-    			return true;
-    			//If not message sender and return false
-    		} else {
-    			sender.sendMessage(args[0] + " isn't a valid integer so ignoring.");
+    		// Check correct number of arguments
+    		if (checkArguments(args.length, sender, 1)) {
+    			// Ensure args[0] is an integer then set timeout
+    			if (isInteger(args[0])) {
+    				sender.sendMessage("Timeout set to " + args[0]);
+    				this.getConfig().set("LEDIPAddress.timeout", args[0]);
+    				return true;
+    				} else {
+    					//If not message sender and return false
+    					sender.sendMessage(args[0] + " isn't a valid integer so ignoring.");
+    					return false;
+    				}
+    		} else { 
+    			// No need for message as already sent by checkArguments
     			return false;
     		}
     	/* TODO
     	 * This works but doesn't write to file and updateConfig resets to default
     	 */
     	} else if (cmd.getName().equalsIgnoreCase("setUDPShortTimeout")) {
-    		//Ensure args[0] is an integer then set shorttimeout
-    		if (checkArguments(args.length, sender) && isInteger(args[0])) {
-    			sender.sendMessage("Shorttimeout set to " + args[0]);
-    			this.getConfig().set("LEDIPAddress.shortTimeout", args[0]);
-    			return true;
-    			//If not message sender and return false
+    		// Check correct number of arguments
+    		if (checkArguments(args.length, sender, 1)) {
+    			// Ensure args[0] is an integer then set timeout
+    			if (isInteger(args[0])) {
+    				sender.sendMessage("Shorttimeout set to " + args[0]);
+    				this.getConfig().set("LEDIPAddress.shortTimeout", args[0]);
+    				return true;
+    			} else {
+    				//If not message sender and return false
+    				sender.sendMessage(args[0] + " isn't a valid integer so ignoring.");
+        			return false;
+    			}
     		} else {
-    			sender.sendMessage(args[0] + " isn't a valid integer so ignoring.");
+    			// No need for message as already sent by checkArguments
     			return false;
     		}
     	} else {
@@ -159,7 +190,7 @@ public final class Main extends JavaPlugin implements Listener {
 	getLogger().info("Starting udpTransmit()");
 	// Ignore if loopback address
 	/* Make live after testing
-	if (!udpIPAddress.equals("127.0.0.1")) {
+	if (!udpIPAddress.startsWith("127")) {
 	 * 
 	 * Note that 127.x.x.x is also reachable but not valid
 	 */
@@ -208,7 +239,9 @@ public final class Main extends JavaPlugin implements Listener {
 	*/
 	}
 	
+	/*
     // Determine player location
+	//TODO convert this to return count type and receiveIPAddrees or return boolean
     private void isLocal() {
     	// Set local variables and count
     	// Count players coming from router's address as external
@@ -221,7 +254,10 @@ public final class Main extends JavaPlugin implements Listener {
     			}
     		}
     	//Any other addresses starting with 192.168.1 are internal
-    	else if (recentPlayerIP.startsWith("192.168.1")) {
+    	//TODO Check the 172.16.x.x~172.31.x.x IP range
+    	else if (recentPlayerIP.startsWith("192.168") || recentPlayerIP.startsWith("10")) {
+    	//TODO Update to receive IP address (possibly return count type later)
+    	// else if (InetAddress.isSiteLocalAddress(recentPlayerIP)) {
     		if (recentJoin) {
     			local++;
     			}
@@ -239,8 +275,20 @@ public final class Main extends JavaPlugin implements Listener {
     			}
     		}
     	}
-
-    // Initialise LEd after IP Address change
+	*/
+	
+	// TODO test this shows external IP addresses properly
+	private Boolean isLocal(InetAddress addr) {
+    	// Set local variables and count
+    	// Count players coming from router's address as external
+		if (addr.isSiteLocalAddress()) {
+    		return true;
+		} else {
+			return false;
+    	}
+	}
+	
+    // Initialise LED after IP Address change
     private void reinitialiseLED() {
 		udpTransmit ("Red On");
 		udpTransmit ("Amber Off");
@@ -383,14 +431,15 @@ public final class Main extends JavaPlugin implements Listener {
         }
     }
     
-    private Boolean checkArguments (Integer args, CommandSender sender) {
-    	if (args < 1) {
-			sender.sendMessage("Should have an argument!");
+    private Boolean checkArguments (Integer args, CommandSender sender, Integer correctArgs) {
+    	if (args < correctArgs) {
+			sender.sendMessage("Not enough arguments!");
 	        return false;
-	    } else if (args >1) {
+	    } else if (args > correctArgs) {
 	    	sender.sendMessage("Calm down, too many arguments!");
 	        return false;
 	    } else {
+	    	sender.sendMessage("Correct number of arguments!");
 	    	return true;
 	    } 	
     }
