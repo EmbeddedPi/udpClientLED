@@ -66,10 +66,12 @@ public final class Main extends JavaPlugin implements Listener {
     	recentPlayerIP = event.getPlayer().getAddress().getAddress();   	
     	if(isLocal(recentPlayerIP)) {
     		local++;
-    		event.getPlayer().sendMessage(event.getPlayer().getName() +" is local.");
+    		event.getPlayer().sendMessage(event.getPlayer().getName() + " is local TEST.");
+    		event.getPlayer().sendMessage("IP adress is " + event.getPlayer().getAddress().getAddress());
     	} else {
     		notLocal++;
-    		event.getPlayer().sendMessage(event.getPlayer().getName() +" is not local.");
+    		event.getPlayer().sendMessage(event.getPlayer().getName() + " is not local TEST.");
+    		event.getPlayer().sendMessage("IP adress is " + event.getPlayer().getAddress().getAddress());
     	}
     	//recentJoin = true;
     	// isLocal();
@@ -282,6 +284,7 @@ public final class Main extends JavaPlugin implements Listener {
     	// Set local variables and count
     	// Count players coming from router's address as external
 		if (addr.isSiteLocalAddress()) {
+			//
     		return true;
 		} else {
 			return false;
