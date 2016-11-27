@@ -63,7 +63,8 @@ public final class Main extends JavaPlugin implements Listener {
     public void onLogin(PlayerJoinEvent event) throws UnknownHostException {
     	// Check whether internal or external IP address
     	// recentPlayerIP = event.getPlayer().getAddress().getHostString();
-    	recentPlayerIP = event.getPlayer().getAddress().getAddress();   	
+    	recentPlayerIP = event.getPlayer().getAddress().getAddress();  
+    	
     	if(isLocal(recentPlayerIP)) {
     		local++;
     		event.getPlayer().sendMessage(event.getPlayer().getName() + " is local TEST.");
@@ -279,12 +280,12 @@ public final class Main extends JavaPlugin implements Listener {
     	}
 	*/
 	
-	// TODO test this shows external IP addresses properly
+	// TODO Determine router address (OS dependent)
 	private Boolean isLocal(InetAddress addr) {
-    	// Set local variables and count
-    	// Count players coming from router's address as external
+    	// TODO Count players coming from router's address as external
+		String OS_Name = checkOS();
+		getLogger().info("This is running on " + OS_Name);
 		if (addr.isSiteLocalAddress()) {
-			//
     		return true;
 		} else {
 			return false;
@@ -469,5 +470,9 @@ public final class Main extends JavaPlugin implements Listener {
             }
         }
         return true;
+    }
+    
+    private String checkOS() {
+    	return System.getProperty("os.name");	
     }
 }
