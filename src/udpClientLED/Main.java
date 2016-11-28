@@ -11,12 +11,17 @@ import java.net.InetAddress;
 //import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.StringTokenizer;
+
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 //import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 //import org.bukkit.configuration.file.FileConfiguration;
 //import org.bukkit.configuration.file.YamlConfiguration;
@@ -30,15 +35,23 @@ public final class Main extends JavaPlugin implements Listener {
 	// private String recentPlayerIP = "";
 	// Don't initialise as this is set by file or config defaults
 	private static String udpIPAddress;
+	private static InetAddress routerIP;
 	// Default timeout for checking new udp connection
 	private static int timeout;
 	// Default timeout for checking known good connections
 	private static int shortTimeout;
+	private static String osName = null;
 	 
 	@Override
     public void onEnable() {
 		// register listener
 		getServer().getPluginManager().registerEvents(this, this);
+		// Cache osName for later, only call if not set
+		if(osName == null) { 
+	    	  osName = checkOS(); 
+	    }
+		routerIP = getRouter(osName);
+		getLogger().info("Server is running on " + osName);
 		// Load or initialise configuration file
 		loadConfiguration();
 		getLogger().info("Returned from loadConfiguration()");
@@ -283,8 +296,6 @@ public final class Main extends JavaPlugin implements Listener {
 	// TODO Determine router address (OS dependent)
 	private Boolean isLocal(InetAddress addr) {
     	// TODO Count players coming from router's address as external
-		String OS_Name = checkOS();
-		getLogger().info("This is running on " + OS_Name);
 		if (addr.isSiteLocalAddress()) {
     		return true;
 		} else {
@@ -473,6 +484,58 @@ public final class Main extends JavaPlugin implements Listener {
     }
     
     private String checkOS() {
-    	return System.getProperty("os.name");	
-    }
+    	// Test line to show properties, delete after testing
+    	System.getProperties().list(System.out);
+    	String name = System.getProperty("os_name").toLowerCase();
+    	if (name.contains("windows")) {
+    		return "Windows";
+    	} else if (name.contains("linux")) {
+    		return "Linux";
+    	} else if (name.contains("mac")) {
+    		return "Mac";
+    	} else {
+    		return "Unknown";
+    	}    	
+   }
+    
+   private InetAddress getRouter(String OS) {
+	   // TODO Handle the different cases
+	   String gateway = "";
+	   try {
+		   Process result = Runtime.getRuntime().exec("netstat -rn");	   
+		   BufferedReader output = new BufferedReader
+				    (new InputStreamReader(result.getInputStream()));
+				    String line = output.readLine();
+				    while(line != null){
+				    if ( line.startsWith("default") == true || line.startsWith("0.0.0.0"))
+				        break;      
+				    line = output.readLine();
+				    }
+				    StringTokenizer st = new StringTokenizer( line );
+				    // Case for Mac
+				    if (line.startsWith("default")) { 
+				    	st.nextToken();
+				    	gateway = st.nextToken();
+				    	st.nextToken();
+				    	st.nextToken();
+				    	st.nextToken();
+				    // Case for Windows/Linux
+				    } else if (line.startsWith("0.0.0.0")) {
+				    	st.nextToken();
+				    	st.nextToken();
+				    	//TODO Check third is applicable as might be second
+					    gateway = st.nextToken();
+					    st.nextToken();
+					    st.nextToken();			    	
+				    } else {
+				    	// Do something else 
+				    }
+			// TODO convert gateway string to InetAddress
+			InetAddress routerIP = InetAddress.getByName(gateway);
+			return routerIP;
+	   } catch (Exception e ) { 
+		    System.out.println( e.toString() );
+	   } 
+	   return routerIP;
+   }
 }
