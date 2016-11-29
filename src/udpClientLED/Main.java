@@ -12,10 +12,8 @@ import java.net.InetAddress;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.StringTokenizer;
-
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -36,6 +34,7 @@ public final class Main extends JavaPlugin implements Listener {
 	// Don't initialise as this is set by file or config defaults
 	private static String udpIPAddress;
 	private static InetAddress routerIP;
+	private static final String localHost = "127.0.0.1";
 	// Default timeout for checking new udp connection
 	private static int timeout;
 	// Default timeout for checking known good connections
@@ -295,8 +294,10 @@ public final class Main extends JavaPlugin implements Listener {
 	
 	// TODO Determine router address (OS dependent)
 	private Boolean isLocal(InetAddress addr) {
-    	// TODO Count players coming from router's address as external
-		if (addr.isSiteLocalAddress()) {
+    	// Count players coming from router's address as external
+		if (addr == routerIP) {
+			return false;
+		} else if (addr.isSiteLocalAddress()) {
     		return true;
 		} else {
 			return false;
@@ -486,6 +487,7 @@ public final class Main extends JavaPlugin implements Listener {
     private String checkOS() {
     	// Test line to show properties, delete after testing
     	System.getProperties().list(System.out);
+    	//TODO Fix this line
     	String name = System.getProperty("os_name").toLowerCase();
     	if (name.contains("windows")) {
     		return "Windows";
@@ -499,42 +501,54 @@ public final class Main extends JavaPlugin implements Listener {
    }
     
    private InetAddress getRouter(String OS) {
-	   // TODO Handle the different cases
 	   String gateway = "";
 	   try {
+		   // Ignore unknown OS case as can't handle
+		   if (OS.equals("Unknown")) {
+			   getLogger().info("Unknown OS so setting router as loopbcak address");
+			   return InetAddress.getByName(localHost);
+		   }
 		   Process result = Runtime.getRuntime().exec("netstat -rn");	   
 		   BufferedReader output = new BufferedReader
 				    (new InputStreamReader(result.getInputStream()));
 				    String line = output.readLine();
 				    while(line != null){
-				    if ( line.startsWith("default") == true || line.startsWith("0.0.0.0"))
+				    if (line.startsWith("default") || line.startsWith("0.0.0.0"))
 				        break;      
 				    line = output.readLine();
+				    getLogger().info("Captured line is '" + line + "'");
 				    }
 				    StringTokenizer st = new StringTokenizer( line );
-				    // Case for Mac
-				    if (line.startsWith("default")) { 
-				    	st.nextToken();
+				    // Case for Mac/Linux
+				    if (OS.equals("Mac") || OS.equals("Linux")) { 
+				    	String one = st.nextToken();
+				    	getLogger().info("Token 1 is '" + one + "'");
 				    	gateway = st.nextToken();
-				    	st.nextToken();
-				    	st.nextToken();
-				    	st.nextToken();
-				    // Case for Windows/Linux
-				    } else if (line.startsWith("0.0.0.0")) {
-				    	st.nextToken();
-				    	st.nextToken();
-				    	//TODO Check third is applicable as might be second
-					    gateway = st.nextToken();
-					    st.nextToken();
-					    st.nextToken();			    	
+				    	getLogger().info("Gateway is '" + gateway + "'");
+				    	String three = st.nextToken();
+				    	getLogger().info("Token 3 is '" + three + "'");
+				    	String four = st.nextToken();
+				    	getLogger().info("Token 4 is '" + four + "'");
+				    	String five = st.nextToken();
+				    	getLogger().info("Token 5 is '" + five + "'");
+				    // Must be Windows otherwise
 				    } else {
-				    	// Do something else 
-				    }
+				    	String one = st.nextToken();
+				    	getLogger().info("Token 1 is '" + one + "'");
+				    	String two = st.nextToken();
+				    	getLogger().info("Token 2 is '" + two + "'");
+					    gateway = st.nextToken();
+					    getLogger().info("Gateway is '" + gateway + "'");
+					    String four = st.nextToken();
+				    	getLogger().info("Token 4 is '" + four + "'");
+				    	String five = st.nextToken();
+				    	getLogger().info("Token 5 is '" + five + "'");	    	
+				    } 
 			// TODO convert gateway string to InetAddress
 			InetAddress routerIP = InetAddress.getByName(gateway);
 			return routerIP;
 	   } catch (Exception e ) { 
-		    System.out.println( e.toString() );
+		    System.out.println(e.toString());
 	   } 
 	   return routerIP;
    }
