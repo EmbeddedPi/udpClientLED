@@ -75,16 +75,15 @@ public final class Main extends JavaPlugin implements Listener {
     public void onLogin(PlayerJoinEvent event) throws UnknownHostException {
     	// Check whether internal or external IP address
     	// recentPlayerIP = event.getPlayer().getAddress().getHostString();
-    	recentPlayerIP = event.getPlayer().getAddress().getAddress();  
-    	
+    	recentPlayerIP = event.getPlayer().getAddress().getAddress();      	
     	if(isLocal(recentPlayerIP)) {
     		local++;
     		event.getPlayer().sendMessage(event.getPlayer().getName() + " is local TEST.");
-    		event.getPlayer().sendMessage("IP adress is " + event.getPlayer().getAddress().getAddress());
+    		event.getPlayer().sendMessage("IP address is " + event.getPlayer().getAddress().getAddress());
     	} else {
     		notLocal++;
     		event.getPlayer().sendMessage(event.getPlayer().getName() + " is not local TEST.");
-    		event.getPlayer().sendMessage("IP adress is " + event.getPlayer().getAddress().getAddress());
+    		event.getPlayer().sendMessage("IP address is " + event.getPlayer().getAddress().getAddress());
     	}
     	//recentJoin = true;
     	// isLocal();
@@ -99,8 +98,7 @@ public final class Main extends JavaPlugin implements Listener {
     	// recentPlayerIP = event.getPlayer().getAddress().getHostString();
     	recentPlayerIP = event.getPlayer().getAddress().getAddress();   	
     	if(isLocal(recentPlayerIP)) {
-    		local--;
-    		
+    		local--;	
     	} else {
     		notLocal--;
     	}
@@ -295,11 +293,16 @@ public final class Main extends JavaPlugin implements Listener {
 	// TODO Determine router address (OS dependent)
 	private Boolean isLocal(InetAddress addr) {
     	// Count players coming from router's address as external
+		getLogger().info("Address passed to getRouter is " + addr);
+		getLogger().info("routerIP passed to getRouter is " + routerIP);
 		if (addr == routerIP) {
+			getLogger().info("isLocal decided player came from router.");
 			return false;
 		} else if (addr.isSiteLocalAddress()) {
+			getLogger().info("isLocal decided player was local.");
     		return true;
 		} else {
+			getLogger().info("isLocal decided player was notlocal!");
 			return false;
     	}
 	}
@@ -485,10 +488,7 @@ public final class Main extends JavaPlugin implements Listener {
     }
     
     private String checkOS() {
-    	// Test line to show properties, delete after testing
-    	System.getProperties().list(System.out);
-    	//TODO Fix this line
-    	String name = System.getProperty("os_name").toLowerCase();
+    	String name = System.getProperty("os.name").toLowerCase();
     	if (name.contains("windows")) {
     		return "Windows";
     	} else if (name.contains("linux")) {
@@ -496,7 +496,12 @@ public final class Main extends JavaPlugin implements Listener {
     	} else if (name.contains("mac")) {
     		return "Mac";
     	} else {
-    		return "Unknown";
+    		getLogger().info(name + " is currently unsupported.");
+    		getLogger().info("If you would like to help get " + name + " supported");
+    		getLogger().info("Please raise a ticket for the developer on BukkitDev.");
+    		getLogger().info("Run the terminal/command line command 'netstat -rn'");
+    		getLogger().info("Include the ouptut in your ticket description.");
+    		return "Unknown";   		
     	}    	
    }
     
@@ -505,7 +510,7 @@ public final class Main extends JavaPlugin implements Listener {
 	   try {
 		   // Ignore unknown OS case as can't handle
 		   if (OS.equals("Unknown")) {
-			   getLogger().info("Unknown OS so setting router as loopbcak address");
+			   getLogger().info("Unknown OS so setting router as loopback address");
 			   return InetAddress.getByName(localHost);
 		   }
 		   Process result = Runtime.getRuntime().exec("netstat -rn");	   
@@ -546,6 +551,7 @@ public final class Main extends JavaPlugin implements Listener {
 				    } 
 			// TODO convert gateway string to InetAddress
 			InetAddress routerIP = InetAddress.getByName(gateway);
+			getLogger().info("gateway is set to " + gateway);
 			return routerIP;
 	   } catch (Exception e ) { 
 		    System.out.println(e.toString());
