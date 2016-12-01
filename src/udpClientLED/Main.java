@@ -224,8 +224,8 @@ public final class Main extends JavaPlugin implements Listener {
 				e.printStackTrace();
 			}
 		} else {
-			//Loopback default of 127.0.0.1 so don't bother
-			getLogger().info("IP Address is still set to default of 127.0.0.1 or loopback range 127.x.x.x. Not transmitting.");
+			//In loopback range of 127.x.x.x so don't bother
+			getLogger().info("IP Address is still set to default of 127.0.0.1 or in loopback range 127.x.x.x.");
 			getLogger().info("Not transmitting.");
 		}
 	}
@@ -467,19 +467,10 @@ public final class Main extends JavaPlugin implements Listener {
 				    // Case for Mac/Linux, 2nd token is gateway
 				    if (OS.equals("Mac") || OS.equals("Linux")) { 
 				    	st.nextToken();
-				    	//String one = st.nextToken();
-				    	//getLogger().info("Token 1 is '" + one + "'");
 				    	gateway = st.nextToken();
-				    	//getLogger().info("Gateway is '" + gateway + "'");
 				    	st.nextToken();
-				    	//String three = st.nextToken();
-				    	//getLogger().info("Token 3 is '" + three + "'");
 				    	st.nextToken();
-				    	//String four = st.nextToken();
-				    	//getLogger().info("Token 4 is '" + four + "'");
 				    	st.nextToken();
-				    	//String five = st.nextToken();
-				    	//getLogger().info("Token 5 is '" + five + "'");
 				    /*
 				     * If other cases added then change next line to
 				     * } else if (OS.equals("Windows"))) {
@@ -487,22 +478,18 @@ public final class Main extends JavaPlugin implements Listener {
 					// Must be Windows otherwise, 3rd token is gateway
 				    } else {
 				    	st.nextToken();
-				    	//String one = st.nextToken();
-				    	//getLogger().info("Token 1 is '" + one + "'");
+				    	/* 
+				    	 * Example line for debugging a new test case
+				    	 * String one = st.nextToken();
+				    	 * getLogger().info("Token 1 is '" + one + "'");
+				    	*/
 				    	st.nextToken();
-				    	//String two = st.nextToken();
-				    	//getLogger().info("Token 2 is '" + two + "'");
 					    gateway = st.nextToken();
-					    //getLogger().info("Gateway is '" + gateway + "'");
 					    st.nextToken();
-					    //String four = st.nextToken();
-				    	//getLogger().info("Token 4 is '" + four + "'");
-				    	st.nextToken();
-				    	//String five = st.nextToken();
-				    	//getLogger().info("Token 5 is '" + five + "'");	    	
+				    	st.nextToken();    	
 				    } 
 			InetAddress routerIP = InetAddress.getByName(gateway);
-			getLogger().info("Gateway is set to " + gateway);
+			// getLogger().info("Gateway is set to " + gateway);
 			return routerIP;
 	   } catch (Exception e ) { 
 		   getLogger().info(e.toString());
