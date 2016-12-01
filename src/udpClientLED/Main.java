@@ -5,41 +5,33 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-//import java.net.InetSocketAddress;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
-import java.util.StringTokenizer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.SocketTimeoutException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.StringTokenizer;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
-//import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-//import org.bukkit.configuration.file.FileConfiguration;
-//import org.bukkit.configuration.file.YamlConfiguration;
 
 public final class Main extends JavaPlugin implements Listener {
 	
 	private short local = 0;
 	private short notLocal = 0;
-	// private boolean recentJoin = false;
-	InetAddress recentPlayerIP = null;
-	// private String recentPlayerIP = "";
-	// Don't initialise as this is set by file or config defaults
-	private static String udpIPAddress;
-	private static InetAddress routerIP;
 	private static final String localHost = "127.0.0.1";
-	// Default timeout for checking new udp connection
-	private static int timeout;
-	// Default timeout for checking known good connections
-	private static int shortTimeout;
+	private InetAddress recentPlayerIP = null;
+	private static InetAddress routerIP = null;
 	private static String osName = null;
+	// Not initialised as these are set by file or config defaults
+	private static String udpIPAddress;	
+	private static int timeout;
+	private static int shortTimeout;
 	 
 	@Override
     public void onEnable() {
@@ -57,16 +49,16 @@ public final class Main extends JavaPlugin implements Listener {
 		String IPAddressLoaded = this.getConfig().getString("LEDIPAddress.IPAddress");
 		getLogger().info("loadedIPAddress is set to " + IPAddressLoaded);
 		// Indicate that plugin has started with a light display
-		udpTransmit ("Funky Disco");
+		udpTransmit ("Funky_Disco");
 		getLogger().info("udpClientLED is switched on."); 
-		udpTransmit ("Red On");
+		udpTransmit ("Red_On");
 		//TODO Check if any players are already logged in and adjust local count accordingly
 	}
  
     @Override
     public void onDisable() {
         //Switch off all LEDs
-    	udpTransmit ("All Off");
+    	udpTransmit ("All_Off");
         getLogger().info("udpClientLED has been extinguished.");
     }
     
@@ -78,16 +70,11 @@ public final class Main extends JavaPlugin implements Listener {
     	recentPlayerIP = event.getPlayer().getAddress().getAddress();      	
     	if(isLocal(recentPlayerIP)) {
     		local++;
-    		event.getPlayer().sendMessage(event.getPlayer().getName() + " is local TEST.");
-    		event.getPlayer().sendMessage("IP address is " + event.getPlayer().getAddress().getAddress());
+    		//event.getPlayer().sendMessage("IP address is " + event.getPlayer().getAddress().getAddress());
     	} else {
     		notLocal++;
-    		event.getPlayer().sendMessage(event.getPlayer().getName() + " is not local TEST.");
-    		event.getPlayer().sendMessage("IP address is " + event.getPlayer().getAddress().getAddress());
+    		//event.getPlayer().sendMessage("IP address is " + event.getPlayer().getAddress().getAddress());
     	}
-    	//recentJoin = true;
-    	// isLocal();
-    	// Update local/notLocal LED status according
     	updateLED();
     }
     
@@ -102,9 +89,6 @@ public final class Main extends JavaPlugin implements Listener {
     	} else {
     		notLocal--;
     	}
-    	//recentJoin = false;
-    	//isLocal();
-    	// Update local/notLocal LED status according
     	updateLED();
     }
    
@@ -202,101 +186,57 @@ public final class Main extends JavaPlugin implements Listener {
 	public void udpTransmit(String message) {		
 	getLogger().info("Starting udpTransmit()");
 	// Ignore if loopback address
-	/* Make live after testing
-	if (!udpIPAddress.startsWith("127")) {
-	 * 
-	 * Note that 127.x.x.x is also reachable but not valid
-	 */
-		byte[] sendData = new byte[16];
-		byte[] receiveData = new byte[16];
-		// String sentence = inFromUser.readLine();
-		try {
-			DatagramSocket clientSocket = new DatagramSocket();
-			clientSocket.setSoTimeout(timeout);
-			InetAddress IPAddress = InetAddress.getByName(udpIPAddress);
-			if (IPAddress.isReachable(shortTimeout)) {
-				System.out.println(udpIPAddress + " is reachable");
-				sendData = message.getBytes();
-				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
-				clientSocket.send(sendPacket);
-				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-				System.out.println("Set to receive packet from within udpTransmit");
-				//Hangs here if reply not received
-				try {
-					clientSocket.receive(receivePacket);
-					InetAddress IPAddressRec = receivePacket.getAddress();
-					int port = receivePacket.getPort();
-					System.out.println("Got this from " + IPAddressRec + " @ port " + port);
-					String modifiedSentence = new String(receivePacket.getData());
-					System.out.println("FROM SERVER:" + modifiedSentence);
-					System.out.println("IPAddress = " + IPAddress);
-				} catch (SocketTimeoutException e) {
-					//Timeout waiting for reply
-					System.out.println("Didn't get a reply within timeout");
-				}
-       		clientSocket.close();
-       } else {
-		   System.out.println(udpIPAddress + " is not reachable");
-	   }
-    	}
-    catch (Exception e) {
-    	//TODO Better error handling than this lazy cop out
-    	e.printStackTrace();
-    	}
-	// If loopback address
-    /* Make live after testing
-	//} else {
-		//Loopback default of 127.0.0.1 so don't bother
-		System.out.println("IP Address is still set to default of 127.0.0.1. Not transmitting.");
-	}
-	*/
+		if (!udpIPAddress.startsWith("127")) {
+			byte[] sendData = new byte[16];
+			byte[] receiveData = new byte[32];
+			// String sentence = inFromUser.readLine();
+			try {
+				DatagramSocket clientSocket = new DatagramSocket();
+				clientSocket.setSoTimeout(timeout);
+				InetAddress IPAddress = InetAddress.getByName(udpIPAddress);
+					if (IPAddress.isReachable(shortTimeout)) {
+						getLogger().info(udpIPAddress + " is reachable");
+						sendData = message.getBytes();
+						DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
+						clientSocket.send(sendPacket);
+						DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+						getLogger().info("Set to receive packet from within udpTransmit");
+						//Hangs here if reply not received
+						try {
+							clientSocket.receive(receivePacket);
+							InetAddress IPAddressRec = receivePacket.getAddress();
+							int port = receivePacket.getPort();
+							getLogger().info("Got this from " + IPAddressRec + " @ port " + port);
+							String modifiedSentence = new String(receivePacket.getData());
+							//TODO This only returns first character from udpServer
+							getLogger().info("FROM SERVER:" + modifiedSentence);
+							getLogger().info("IPAddress = " + IPAddress);
+						} catch (SocketTimeoutException e) {
+							//Timeout waiting for reply
+							getLogger().info("Didn't get a reply within timeout");
+						}
+					clientSocket.close();
+					} else {
+						getLogger().info(udpIPAddress + " is not reachable");
+					}
+			} catch (Exception e) {
+				//TODO Better error handling than this lazy cop out
+				e.printStackTrace();
+			}
+		} else {
+			//Loopback default of 127.0.0.1 so don't bother
+			getLogger().info("IP Address is still set to default of 127.0.0.1 or loopback range 127.x.x.x. Not transmitting.");
+			getLogger().info("Not transmitting.");
+		}
 	}
 	
-	/*
-    // Determine player location
-	//TODO convert this to return count type and receiveIPAddrees or return boolean
-    private void isLocal() {
-    	// Set local variables and count
-    	// Count players coming from router's address as external
-    	if (recentPlayerIP.equals("192.168.1.1")) {
-    		if (recentJoin) {
-    			notLocal++;
-    			}
-    			else {
-    			notLocal--;
-    			}
-    		}
-    	//Any other addresses starting with 192.168.1 are internal
-    	//TODO Check the 172.16.x.x~172.31.x.x IP range
-    	else if (recentPlayerIP.startsWith("192.168") || recentPlayerIP.startsWith("10")) {
-    	//TODO Update to receive IP address (possibly return count type later)
-    	// else if (InetAddress.isSiteLocalAddress(recentPlayerIP)) {
-    		if (recentJoin) {
-    			local++;
-    			}
-    		else {
-    		local--;
-    			}
-    		}
-    	// Anything else is external
-    	else {
-    		if (recentJoin) {
-    			notLocal++;
-    			}
-    			else {
-    			notLocal--;
-    			}
-    		}
-    	}
-	*/
-	
-	// TODO Determine router address (OS dependent)
+	// Determine whether the player is local on login/logout
 	private Boolean isLocal(InetAddress addr) {
+		//getLogger().info("Address passed to getRouter is " + addr);
+		//getLogger().info("routerIP passed to getRouter is " + routerIP);
     	// Count players coming from router's address as external
-		getLogger().info("Address passed to getRouter is " + addr);
-		getLogger().info("routerIP passed to getRouter is " + routerIP);
-		if (addr == routerIP) {
-			getLogger().info("isLocal decided player came from router.");
+		if (addr.equals(routerIP)) {
+			getLogger().info("isLocal decided player came via router.");
 			return false;
 		} else if (addr.isSiteLocalAddress()) {
 			getLogger().info("isLocal decided player was local.");
@@ -309,25 +249,25 @@ public final class Main extends JavaPlugin implements Listener {
 	
     // Initialise LED after IP Address change
     private void reinitialiseLED() {
-		udpTransmit ("Red On");
-		udpTransmit ("Amber Off");
-		udpTransmit ("Green Off");		
+		udpTransmit ("Red_On");
+		udpTransmit ("Amber_Off");
+		udpTransmit ("Green_Off");		
 		updateLED();
     }
     
     // Update player LED status
     private void updateLED() {
     	if (local > 0) {
-    		udpTransmit ("Amber On");
+    		udpTransmit ("Amber_On");
     		}
     	else {
-    		udpTransmit ("Amber Off");
+    		udpTransmit ("Amber_Off");
     		}
     	if (notLocal > 0) {
-    		udpTransmit ("Green On");		
+    		udpTransmit ("Green_On");		
     		}
     	else {
-    		udpTransmit ("Green Off");		
+    		udpTransmit ("Green_Off");		
     		}	
     }
     
@@ -362,10 +302,10 @@ public final class Main extends JavaPlugin implements Listener {
 			this.getConfig().options().copyDefaults(false);
 			String newIPAddress = this.getConfig().getString("LEDIPAddress.IPAddress");
 			getLogger().info("newFromFileIPAddress is set to " + newIPAddress);
-			//TDODO check whether these fail if values aren't integers
+			//TODO check whether these fail if values aren't integers
 			Integer newTimeout = this.getConfig().getInt("LEDIPAddress.timeout");
 			Integer newShortTimeout = this.getConfig().getInt("LEDIPAddress.shortTimeout");
-			//TODO If all is fine then assign
+			//If all is fine then assign
 			timeout = newTimeout;
 			shortTimeout = newShortTimeout;
 			/* TODO
@@ -378,12 +318,12 @@ public final class Main extends JavaPlugin implements Listener {
 				//Test this new address first as tempIPAddress
 				InetAddress tempIPAddress = InetAddress.getByName(newIPAddress);
 				if (tempIPAddress.isReachable(timeout)) {
-					System.out.println(tempIPAddress + " is reachable");
+					getLogger().info(tempIPAddress + " is reachable");
 					udpIPAddress = newIPAddress;
 					getLogger().info("IPAddress is now set to " + udpIPAddress);
 				} else {
-					System.out.println(tempIPAddress + " is not reachable");
-					System.out.println("Reverting to loopback default of 127.0.0.1");
+					getLogger().info(tempIPAddress + " is not reachable");
+					getLogger().info("Reverting to loopback default of 127.0.0.1");
 					udpIPAddress = defaultIPAddress;
 					saveConfig();
 				}
@@ -400,9 +340,9 @@ public final class Main extends JavaPlugin implements Listener {
     private void updateConfig() {
     	String IPAddressTemp = this.getConfig().getString("LEDIPAddress.IPAddress");
     	Integer timeoutTemp = this.getConfig().getInt("LEDIPAddress.timeout");
-    	System.out.println("updateConfigTimeoutTemp is " + timeoutTemp);
+    	getLogger().info("updateConfigTimeoutTemp is " + timeoutTemp);
     	Integer shortTimeoutTemp = this.getConfig().getInt("LEDIPAddress.shortTimeout");
-    	System.out.println("updateConfigShortTimeoutTemp is " + shortTimeoutTemp);
+    	getLogger().info("updateConfigShortTimeoutTemp is " + shortTimeoutTemp);
     	reloadConfig();
 		String Proposed = this.getConfig().getString("LEDIPAddress.IPAddress");
 		try {
@@ -497,7 +437,7 @@ public final class Main extends JavaPlugin implements Listener {
     		return "Mac";
     	} else {
     		getLogger().info(name + " is currently unsupported.");
-    		getLogger().info("If you would like to help get " + name + " supported");
+    		getLogger().info("If you would like to help get " + name + " supported.");
     		getLogger().info("Please raise a ticket for the developer on BukkitDev.");
     		getLogger().info("Run the terminal/command line command 'netstat -rn'");
     		getLogger().info("Include the ouptut in your ticket description.");
@@ -510,7 +450,7 @@ public final class Main extends JavaPlugin implements Listener {
 	   try {
 		   // Ignore unknown OS case as can't handle
 		   if (OS.equals("Unknown")) {
-			   getLogger().info("Unknown OS so setting router as loopback address");
+			   getLogger().info("Unsupported OS so setting router as loopback address.");
 			   return InetAddress.getByName(localHost);
 		   }
 		   Process result = Runtime.getRuntime().exec("netstat -rn");	   
@@ -521,40 +461,51 @@ public final class Main extends JavaPlugin implements Listener {
 				    if (line.startsWith("default") || line.startsWith("0.0.0.0"))
 				        break;      
 				    line = output.readLine();
-				    getLogger().info("Captured line is '" + line + "'");
 				    }
+				    //getLogger().info("Captured line is '" + line + "'");
 				    StringTokenizer st = new StringTokenizer( line );
-				    // Case for Mac/Linux
+				    // Case for Mac/Linux, 2nd token is gateway
 				    if (OS.equals("Mac") || OS.equals("Linux")) { 
-				    	String one = st.nextToken();
-				    	getLogger().info("Token 1 is '" + one + "'");
+				    	st.nextToken();
+				    	//String one = st.nextToken();
+				    	//getLogger().info("Token 1 is '" + one + "'");
 				    	gateway = st.nextToken();
-				    	getLogger().info("Gateway is '" + gateway + "'");
-				    	String three = st.nextToken();
-				    	getLogger().info("Token 3 is '" + three + "'");
-				    	String four = st.nextToken();
-				    	getLogger().info("Token 4 is '" + four + "'");
-				    	String five = st.nextToken();
-				    	getLogger().info("Token 5 is '" + five + "'");
-				    // Must be Windows otherwise
+				    	//getLogger().info("Gateway is '" + gateway + "'");
+				    	st.nextToken();
+				    	//String three = st.nextToken();
+				    	//getLogger().info("Token 3 is '" + three + "'");
+				    	st.nextToken();
+				    	//String four = st.nextToken();
+				    	//getLogger().info("Token 4 is '" + four + "'");
+				    	st.nextToken();
+				    	//String five = st.nextToken();
+				    	//getLogger().info("Token 5 is '" + five + "'");
+				    /*
+				     * If other cases added then change next line to
+				     * } else if (OS.equals("Windows"))) {
+				     */
+					// Must be Windows otherwise, 3rd token is gateway
 				    } else {
-				    	String one = st.nextToken();
-				    	getLogger().info("Token 1 is '" + one + "'");
-				    	String two = st.nextToken();
-				    	getLogger().info("Token 2 is '" + two + "'");
+				    	st.nextToken();
+				    	//String one = st.nextToken();
+				    	//getLogger().info("Token 1 is '" + one + "'");
+				    	st.nextToken();
+				    	//String two = st.nextToken();
+				    	//getLogger().info("Token 2 is '" + two + "'");
 					    gateway = st.nextToken();
-					    getLogger().info("Gateway is '" + gateway + "'");
-					    String four = st.nextToken();
-				    	getLogger().info("Token 4 is '" + four + "'");
-				    	String five = st.nextToken();
-				    	getLogger().info("Token 5 is '" + five + "'");	    	
+					    //getLogger().info("Gateway is '" + gateway + "'");
+					    st.nextToken();
+					    //String four = st.nextToken();
+				    	//getLogger().info("Token 4 is '" + four + "'");
+				    	st.nextToken();
+				    	//String five = st.nextToken();
+				    	//getLogger().info("Token 5 is '" + five + "'");	    	
 				    } 
-			// TODO convert gateway string to InetAddress
 			InetAddress routerIP = InetAddress.getByName(gateway);
-			getLogger().info("gateway is set to " + gateway);
+			getLogger().info("Gateway is set to " + gateway);
 			return routerIP;
 	   } catch (Exception e ) { 
-		    System.out.println(e.toString());
+		   getLogger().info(e.toString());
 	   } 
 	   return routerIP;
    }
