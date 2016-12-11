@@ -465,6 +465,7 @@ public final class Main extends JavaPlugin implements Listener {
 				    //getLogger().info("Captured line is '" + line + "'");
 				    StringTokenizer st = new StringTokenizer( line );
 				    // Case for Mac/Linux, 2nd token is gateway
+				    // Solaris will probably fit in here as well
 				    if (OS.equals("Mac") || OS.equals("Linux")) { 
 				    	st.nextToken();
 				    	gateway = st.nextToken();
