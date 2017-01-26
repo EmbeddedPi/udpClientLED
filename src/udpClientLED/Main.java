@@ -137,16 +137,16 @@ public final class Main extends JavaPlugin implements Listener {
     		updateConfig();
     		reinitialiseLED();
     		return true;
-    	/* TODO
-    	 * This works but doesn't write to file and updateConfig resets to default
-    	 */
     	} else if (cmd.getName().equalsIgnoreCase("setUDPTimeout")) {
     		// Check correct number of arguments
     		if (checkArguments(args.length, sender, 1)) {
     			// Ensure args[0] is an integer then set timeout
     			if (isInteger(args[0])) {
     				sender.sendMessage("Timeout set to " + args[0]);
+    				// Sets the value to loaded config file.
     				this.getConfig().set("LEDIPAddress.timeout", args[0]);
+    				// Write this value to config file on disc
+    				saveConfig();
     				return true;
     				} else {
     					//If not message sender and return false
@@ -157,16 +157,16 @@ public final class Main extends JavaPlugin implements Listener {
     			// No need for message as already sent by checkArguments
     			return false;
     		}
-    	/* TODO
-    	 * This works but doesn't write to file and updateConfig resets to default
-    	 */
     	} else if (cmd.getName().equalsIgnoreCase("setUDPShortTimeout")) {
     		// Check correct number of arguments
     		if (checkArguments(args.length, sender, 1)) {
     			// Ensure args[0] is an integer then set timeout
     			if (isInteger(args[0])) {
     				sender.sendMessage("Shorttimeout set to " + args[0]);
+    				// Sets the value to loaded config file.
     				this.getConfig().set("LEDIPAddress.shortTimeout", args[0]);
+    				// Write this value to config file on disc
+    				saveConfig();
     				return true;
     			} else {
     				//If not message sender and return false
@@ -208,7 +208,6 @@ public final class Main extends JavaPlugin implements Listener {
 							int port = receivePacket.getPort();
 							getLogger().info("Got this from " + IPAddressRec + " @ port " + port);
 							String modifiedSentence = new String(receivePacket.getData());
-							//TODO This only returns first character from udpServer
 							getLogger().info("FROM SERVER:" + modifiedSentence);
 							getLogger().info("IPAddress = " + IPAddress);
 						} catch (SocketTimeoutException e) {
@@ -435,10 +434,16 @@ public final class Main extends JavaPlugin implements Listener {
     		return "Linux";
     	} else if (name.contains("mac")) {
     		return "Mac";
+        // Currently untested
+    	} else if (name.contains("sunos")) {
+    		return "Solaris";	    	
+		} else if (name.contains("bsd")) {
+	    		return "FreeBSD";    		
     	} else {
     		getLogger().info(name + " is currently unsupported.");
     		getLogger().info("If you would like to help get " + name + " supported.");
     		getLogger().info("Please raise a ticket for the developer on BukkitDev.");
+    		getLogger().info("Use os.name ='" + name + "' is unsupported as the title.");    		
     		getLogger().info("Run the terminal/command line command 'netstat -rn'");
     		getLogger().info("Include the ouptut in your ticket description.");
     		return "Unknown";   		
@@ -464,9 +469,8 @@ public final class Main extends JavaPlugin implements Listener {
 				    }
 				    //getLogger().info("Captured line is '" + line + "'");
 				    StringTokenizer st = new StringTokenizer( line );
-				    // Case for Mac/Linux, 2nd token is gateway
-				    // Solaris will probably fit in here as well
-				    if (OS.equals("Mac") || OS.equals("Linux")) { 
+				    // Case for Mac/Linux/Solaris/FreeBSD, 2nd token is gateway
+				    if (OS.equals("Mac") || OS.equals("Linux")|| OS.equals("Solaris") || OS.equals("FreeBSD")) { 
 				    	st.nextToken();
 				    	gateway = st.nextToken();
 				    	st.nextToken();
