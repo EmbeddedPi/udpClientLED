@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Piled by EmbeddedPi</title>
+    <title>udpClientLED by EmbeddedPi</title>
 
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/github-light.css">
@@ -15,24 +15,25 @@
   <body>
     <div class="wrapper">
       <header>
-        <h1>piLED</h1>
-        <p>A RaspberryPi based LED notification for minecraft servers (Java)</p>
-
-        <p class="view"><a href="https://github.com/EmbeddedPi/piLED">View the Project on GitHub <small>EmbeddedPi/piLED</small></a></p>
-
+        <h1>udpClientLED</h1>
+        <p>A RaspberryPi based LED notification for minecraft servers (Java). <BR> 
+	This programme works in conjunction with <a href="http://embeddedpi.github.io/udpServerLED/">udpServerLED</a>.<BR>
+        It is based on the original <a href="http://embeddedpi.github.io/piLED/">piLED</a> plugin and runs identical hardware.</p>
 
         <ul>
-          <li><a href="https://github.com/EmbeddedPi/piLED/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/EmbeddedPi/piLED/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/EmbeddedPi/piLED">View On <strong>GitHub</strong></a></li>
+          <li><a href="https://github.com/EmbeddedPi/udpClientLED/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/EmbeddedPi/udpClientLED/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/EmbeddedPi/udpClientLED">View On <strong>GitHub</strong></a></li>
         </ul>
       </header>
       <section>
         <h3>
 <a id="welcome-to-github-pages" class="anchor" href="#Overview" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Overview</h3>
 
-<p>piLED is a traffic light based minecraft server notification system using a RaspberryPi. You will need a RaspberryPi running a minecraft server which is connected to the physical hardware described in this guide. The LEDs indicate whether the server is running or not (red), if someone is logged in locally (amber) or if someone is logged in from outside (green). This has been tested on both Spigot and Glowstone implementations of the minecraft sever but should work on any other server type that will work on the RaspberryPi and accepts plugins.</p>
+<p>udpClientLED/udpServerLED is a traffic light based minecraft server notification system using a RaspberryPi. You will need a RaspberryPi which is connected to the physical hardware described in this guide in addition to a minecraft server. The LEDs indicate whether the server is running or not (red), if someone is logged in locally (amber) or if someone is logged in from outside (green). This has been tested on both Spigot and Glowstone implementations of the minecraft sever but should work on any other server type that will work on the RaspberryPi and accepts plugins.
+<BR><BR>udpServerLED is a standalone java application that runs on a RaspberryPi connected to the harrdware described below. udpClientLED runs as a standrad Minecraft plugin on your Minecraft server. </p>
 <p><img src="images/piLED.jpg" width="512"></p>
+
 
 <h3>
 <a id="designer-templates" class="anchor" href="#userguide" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>How to use</h3>
