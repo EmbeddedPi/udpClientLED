@@ -144,7 +144,8 @@ public final class Main extends JavaPlugin implements Listener {
     			if (isInteger(args[0])) {
     				sender.sendMessage("Timeout set to " + args[0]);
     				// Sets the value to loaded config file.
-    				this.getConfig().set("LEDIPAddress.timeout", args[0]);
+    				timeout = Integer.parseInt(args[0]);
+    				this.getConfig().set("LEDIPAddress.timeout", timeout);
     				// Write this value to config file on disc
     				saveConfig();
     				return true;
@@ -164,7 +165,8 @@ public final class Main extends JavaPlugin implements Listener {
     			if (isInteger(args[0])) {
     				sender.sendMessage("Shorttimeout set to " + args[0]);
     				// Sets the value to loaded config file.
-    				this.getConfig().set("LEDIPAddress.shortTimeout", args[0]);
+    				shortTimeout = Integer.parseInt(args[0]);
+    				this.getConfig().set("LEDIPAddress.shortTimeout", shortTimeout);
     				// Write this value to config file on disc
     				saveConfig();
     				return true;
@@ -337,26 +339,29 @@ public final class Main extends JavaPlugin implements Listener {
      * 
      */
     private void updateConfig() {
-    	String IPAddressTemp = this.getConfig().getString("LEDIPAddress.IPAddress");
-    	Integer timeoutTemp = this.getConfig().getInt("LEDIPAddress.timeout");
-    	getLogger().info("updateConfigTimeoutTemp is " + timeoutTemp);
-    	Integer shortTimeoutTemp = this.getConfig().getInt("LEDIPAddress.shortTimeout");
-    	getLogger().info("updateConfigShortTimeoutTemp is " + shortTimeoutTemp);
+    	//Load config from file to check values
     	reloadConfig();
-		String Proposed = this.getConfig().getString("LEDIPAddress.IPAddress");
+    	String AddressProposed = this.getConfig().getString("LEDIPAddress.IPAddress");
+    	getLogger().info("updateConfigIPAddressTemp is " + AddressProposed);
+    	Integer timeoutProposed = this.getConfig().getInt("LEDIPAddress.timeout");
+    	getLogger().info("updateConfigTimeoutTemp is " + timeoutProposed);
+    	Integer shortTimeoutProposed = this.getConfig().getInt("LEDIPAddress.shortTimeout");
+    	getLogger().info("updateConfigShortTimeoutTemp is " + shortTimeoutProposed);
 		try {
-			InetAddress IPAddressProposed = InetAddress.getByName(Proposed);
+			InetAddress IPAddressProposed = InetAddress.getByName(AddressProposed);
 			if (IPAddressProposed.isReachable(timeout)) {
-		    	this.getConfig().options().copyDefaults(false);
-		    	String IPAddressUpdated = this.getConfig().getString("LEDIPAddress.IPAddress");
-				getLogger().info("updatedIPAddress is set to " + IPAddressUpdated);
+				//TODO Confirm that udpServerLED is running on proposed target
+				getLogger().info("proposedIPAddress is set to " + AddressProposed);
+				udpIPAddress = AddressProposed;
+				this.getConfig().set("LEDIPAddress.IPAddress", AddressProposed);
 				saveConfig();
 				reinitialiseLED();
 			} else {
-	    		getLogger().info("IP address not working, keeping to previous");	
-	    		this.getConfig().set("LEDIPAddress.IPAddress", IPAddressTemp);
-	    		saveConfig();  
+	    		getLogger().info("IP address not working, resorting to previous");	
+	    		this.getConfig().set("LEDIPAddress.IPAddress", udpIPAddress);
 	    	}
+			saveConfig();
+			reinitialiseLED();
 		} catch (Exception e) {
         	//TODO Clarify this lazy cop out
             e.printStackTrace();
@@ -364,11 +369,22 @@ public final class Main extends JavaPlugin implements Listener {
 		//TODO Check if timeout values are valid		
 		/*
 		 * if (timeout values are valid) {
-		 * timeout = timeoutUpdated;
-		 * shortTimeout = shortTimeoutUpdated;
+		 * timeout = timeoutProposed;
 		 * } else {
-		 * timeout = timeoutTemp;
-		 * shortTimeout = shortTimeoutTemp;
+		 * getLogger().info("timeout not a valid integer, resorting to previous");	
+	     * this.getConfig().set("LEDIPAddress.timeout, timeout);
+	     * }
+	     * 
+		 * 
+		 * 
+		 * if (shortTimeout values are valid) {
+		 * shortTimeout = shortTimeoutProposed;
+		 * } else {
+		 * getLogger().info("shortTimeout not a valid integer, resorting to previous");	
+	    		this.getConfig().set("LEDIPAddress.timeout, shortTimeout);
+		 * saveConfig();
+		 * reinitialiseLED();
+
 		 * }
 		 */
     }
