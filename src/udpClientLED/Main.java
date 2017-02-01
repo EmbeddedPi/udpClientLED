@@ -423,6 +423,24 @@ public final class Main extends JavaPlugin implements Listener {
 	    } 	
     }
     
+    //TODO Test method to check if a proposed new IP address is valid.
+    // Work out how best to do this.
+    /*
+    private boolean checkIPAddress (InetAddress proposedIP) {
+    	try {
+    		if (proposedIP.isReachable(timeout)) {
+    			return true;
+    		} else {
+    		return false;
+    		}
+    	} catch (Exception e) {
+        	//TODO Clarify this lazy cop out
+            e.printStackTrace();
+            return false;
+        }	
+    }
+    */
+    
     private static boolean isInteger(String str) {
         if (str == null) {
             return false;
