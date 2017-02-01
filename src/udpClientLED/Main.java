@@ -319,6 +319,9 @@ public final class Main extends JavaPlugin implements Listener {
 				//Test this new address first as tempIPAddress
 				InetAddress tempIPAddress = InetAddress.getByName(newIPAddress);
 				if (tempIPAddress.isReachable(timeout)) {
+					//TODO Confirm that udpServerLED is running on proposed target
+					udpTransmit ("Oggy_Oggy_Oggy");
+					//Check if response is Oi_Oi_Oi
 					getLogger().info(tempIPAddress + " is reachable");
 					udpIPAddress = newIPAddress;
 					getLogger().info("IPAddress is now set to " + udpIPAddress);
@@ -351,6 +354,8 @@ public final class Main extends JavaPlugin implements Listener {
 			InetAddress IPAddressProposed = InetAddress.getByName(AddressProposed);
 			if (IPAddressProposed.isReachable(timeout)) {
 				//TODO Confirm that udpServerLED is running on proposed target
+				udpTransmit ("Oggy_Oggy_Oggy");
+				//Check if response is Oi_Oi_Oi
 				getLogger().info("proposedIPAddress is set to " + AddressProposed);
 				udpIPAddress = AddressProposed;
 				this.getConfig().set("LEDIPAddress.IPAddress", AddressProposed);
