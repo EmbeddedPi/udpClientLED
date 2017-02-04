@@ -48,6 +48,8 @@ public final class Main extends JavaPlugin implements Listener {
 		getLogger().info("Returned from loadConfiguration()");
 		String IPAddressLoaded = this.getConfig().getString("LEDIPAddress.IPAddress");
 		getLogger().info("loadedIPAddress is set to " + IPAddressLoaded);
+		//TODO This line just to prevent null pointer errors, to be removed later when fixed
+		udpIPAddress = IPAddressLoaded;
 		// Indicate that plugin has started with a light display
 		udpTransmit ("Funky_Disco");
 		getLogger().info("udpClientLED is switched on."); 
@@ -184,13 +186,19 @@ public final class Main extends JavaPlugin implements Listener {
         return false;
     	}
     }
-
+    //TODO Change this so it accepts an IP address in addition to transmission string.
+    /*
+     * This will enable an IP address to be tested without being committed as udpIPAddress
+     */
+    
 	public void udpTransmit(String message) {		
 	getLogger().info("Starting udpTransmit()");
 	// Ignore if loopback address
 		if (!udpIPAddress.startsWith("127")) {
+			getLogger().info("Read if statement in udpTransmit");
 			byte[] sendData = new byte[16];
 			byte[] receiveData = new byte[32];
+			getLogger().info("IP address looks OK");
 			// String sentence = inFromUser.readLine();
 			try {
 				DatagramSocket clientSocket = new DatagramSocket();
@@ -303,6 +311,8 @@ public final class Main extends JavaPlugin implements Listener {
 			this.getConfig().options().copyDefaults(false);
 			String newIPAddress = this.getConfig().getString("LEDIPAddress.IPAddress");
 			getLogger().info("newFromFileIPAddress is set to " + newIPAddress);
+			//TODO This line just to stop null pointer error, needs removing
+			udpIPAddress = newIPAddress;
 			//TODO check whether these fail if values aren't integers
 			Integer newTimeout = this.getConfig().getInt("LEDIPAddress.timeout");
 			Integer newShortTimeout = this.getConfig().getInt("LEDIPAddress.shortTimeout");
