@@ -22,14 +22,15 @@ import java.io.OutputStream;
 
 public final class Main extends JavaPlugin implements Listener {
 	
-	private short local = 0;
-	private short notLocal = 0;
+	private static short local = 0;
+	private static short notLocal = 0;
 	private static final String localHost = "127.0.0.1";
-	private InetAddress recentPlayerIP = null;
+	private static InetAddress recentPlayerIP = null;
 	private static InetAddress routerIP = null;
 	private static String osName = null;
 	// Not initialised as these are set by file or config defaults
-	private static String udpIPAddress;	
+	private static String IPAddressString;
+	private static InetAddress IPAddress;
 	private static int timeout;
 	private static int shortTimeout;
 	 
@@ -45,22 +46,19 @@ public final class Main extends JavaPlugin implements Listener {
 		getLogger().info("Server is running on " + osName);
 		// Load or initialise configuration file
 		loadConfiguration();
-		getLogger().info("Returned from loadConfiguration()");
-		String IPAddressLoaded = this.getConfig().getString("LEDIPAddress.IPAddress");
-		getLogger().info("loadedIPAddress is set to " + IPAddressLoaded);
-		//TODO This line just to prevent null pointer errors, to be removed later when fixed
-		udpIPAddress = IPAddressLoaded;
+		//getLogger().info("Returned from loadConfiguration()");
+		getLogger().info("loadedIPAddress is set to " + IPAddress);
 		// Indicate that plugin has started with a light display
-		udpTransmit ("Funky_Disco");
+		udpTransmit ("Funky_Disco", IPAddress);
 		getLogger().info("udpClientLED is switched on."); 
-		udpTransmit ("Red_On");
+		udpTransmit ("Red_On", IPAddress);
 		//TODO Check if any players are already logged in and adjust local count accordingly
 	}
  
     @Override
     public void onDisable() {
         //Switch off all LEDs
-    	udpTransmit ("All_Off");
+    	udpTransmit ("All_Off", IPAddress);
         getLogger().info("udpClientLED has been extinguished.");
     }
     
@@ -191,52 +189,56 @@ public final class Main extends JavaPlugin implements Listener {
      * This will enable an IP address to be tested without being committed as udpIPAddress
      */
     
-	public void udpTransmit(String message) {		
-	getLogger().info("Starting udpTransmit()");
-	// Ignore if loopback address
-		if (!udpIPAddress.startsWith("127")) {
-			getLogger().info("Read if statement in udpTransmit");
-			byte[] sendData = new byte[16];
-			byte[] receiveData = new byte[32];
-			getLogger().info("IP address looks OK");
-			// String sentence = inFromUser.readLine();
-			try {
-				DatagramSocket clientSocket = new DatagramSocket();
-				clientSocket.setSoTimeout(timeout);
-				InetAddress IPAddress = InetAddress.getByName(udpIPAddress);
-					if (IPAddress.isReachable(shortTimeout)) {
-						getLogger().info(udpIPAddress + " is reachable");
-						sendData = message.getBytes();
-						DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
-						clientSocket.send(sendPacket);
-						DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-						getLogger().info("Set to receive packet from within udpTransmit");
-						//Hangs here if reply not received
-						try {
-							clientSocket.receive(receivePacket);
-							InetAddress IPAddressRec = receivePacket.getAddress();
-							int port = receivePacket.getPort();
-							getLogger().info("Got this from " + IPAddressRec + " @ port " + port);
-							String modifiedSentence = new String(receivePacket.getData());
-							getLogger().info("FROM SERVER:" + modifiedSentence);
-							getLogger().info("IPAddress = " + IPAddress);
-						} catch (SocketTimeoutException e) {
-							//Timeout waiting for reply
-							getLogger().info("Didn't get a reply within timeout");
-						}
+	// public void udpTransmit(String message) {
+    public String udpTransmit(String message, InetAddress IPAddress) {		
+    	getLogger().info("Starting udpTransmit()");
+		byte[] sendData = new byte[16];
+		byte[] receiveData = new byte[32];
+		String returnMessage;
+		// String sentence = inFromUser.readLine();
+		try {
+			DatagramSocket clientSocket = new DatagramSocket();
+			clientSocket.setSoTimeout(timeout);
+			//InetAddress IPAddress = InetAddress.getByName(udpIPAddress);
+			if (IPAddress.isReachable(shortTimeout)) {
+				getLogger().info(IPAddressString + " is reachable");
+				sendData = message.getBytes();
+				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
+				clientSocket.send(sendPacket);
+				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+				getLogger().info("Set to receive packet from within udpTransmit");
+				//Hangs here if reply not received
+				try {
+					clientSocket.receive(receivePacket);
+					InetAddress IPAddressRec = receivePacket.getAddress();
+					int port = receivePacket.getPort();
+					if (IPAddressRec.equals("Oggy_Oggy_Oggy")) {
+							returnMessage= "Oi_Oi_Oi"
+;					} else {
+					getLogger().info("Got this from " + IPAddressRec + " @ port " + port);
+					String modifiedSentence = new String(receivePacket.getData());
+					getLogger().info("FROM SERVER:" + modifiedSentence);
+					getLogger().info("IPAddress = " + IPAddress);
+					returnMessage = "Success";
+                    }
+				} catch (SocketTimeoutException e) {
+					//Timeout waiting for reply
+					getLogger().info("Didn't get a reply within timeout");
+					returnMessage = "Timeout";
+				}
+		
 					clientSocket.close();
-					} else {
-						getLogger().info(udpIPAddress + " is not reachable");
+					return(returnMessage);
+			} else {
+				getLogger().info(IPAddressString + " is not reachable");
+				clientSocket.close();
+				return("Not reachable");						
 					}
 			} catch (Exception e) {
 				//TODO Better error handling than this lazy cop out
 				e.printStackTrace();
+				return("Error");
 			}
-		} else {
-			//In loopback range of 127.x.x.x so don't bother
-			getLogger().info("IP Address is still set to default of 127.0.0.1 or in loopback range 127.x.x.x.");
-			getLogger().info("Not transmitting.");
-		}
 	}
 	
 	// Determine whether the player is local on login/logout
@@ -258,25 +260,25 @@ public final class Main extends JavaPlugin implements Listener {
 	
     // Initialise LED after IP Address change
     private void reinitialiseLED() {
-		udpTransmit ("Red_On");
-		udpTransmit ("Amber_Off");
-		udpTransmit ("Green_Off");		
+		udpTransmit ("Red_On", IPAddress);
+		udpTransmit ("Amber_Off", IPAddress);
+		udpTransmit ("Green_Off", IPAddress);		
 		updateLED();
     }
     
     // Update player LED status
     private void updateLED() {
     	if (local > 0) {
-    		udpTransmit ("Amber_On");
+    		udpTransmit ("Amber_On", IPAddress);
     		}
     	else {
-    		udpTransmit ("Amber_Off");
+    		udpTransmit ("Amber_Off", IPAddress);
     		}
     	if (notLocal > 0) {
-    		udpTransmit ("Green_On");		
+    		udpTransmit ("Green_On", IPAddress);		
     		}
     	else {
-    		udpTransmit ("Green_Off");		
+    		udpTransmit ("Green_Off", IPAddress);		
     		}	
     }
     
@@ -288,10 +290,10 @@ public final class Main extends JavaPlugin implements Listener {
     	getLogger().info("Starting loadConfiguration()");
     	File configFile = new File(getDataFolder(), "config.yml");
     	// Set defaults as variables that can be reverted to if necessary
-    	String defaultIPAddress = this.getConfig().getString("LEDIPAddress.IPAddress");
+    	//String defaultIPAddress = this.getConfig().getString("LEDIPAddress.IPAddress");
     	//TODO Check what happens if these don't return integers
-    	Integer defaultTimeout = this.getConfig().getInt("LEDIPAddress.timeout");
-    	Integer defaultShortTimeout = this.getConfig().getInt("LEDIPAddress.shortTimeout");
+    	//Integer defaultTimeout = this.getConfig().getInt("LEDIPAddress.timeout");
+    	//Integer defaultShortTimeout = this.getConfig().getInt("LEDIPAddress.shortTimeout");
 		// Check config exists or set up if it doesn't
 		if (!configFile.exists()) {
 			getLogger().info("Plugin hasn't been configured so creating config");
@@ -300,19 +302,17 @@ public final class Main extends JavaPlugin implements Listener {
 			configFile.getParentFile().mkdirs();
 			copy(getResource("config.yml"), configFile);
 			//Assign IP address directly as plugin default loopback IP so safe
-			String udpIPAddress = this.getConfig().getString("LEDIPAddress.IPAddress");
+			String IPAddressString = this.getConfig().getString("LEDIPAddress.IPAddress");
 			//Similarly assign timeouts from defaults
-			timeout = defaultTimeout;
-			shortTimeout = defaultShortTimeout;
-			getLogger().info("freshIPAddress is set to " + udpIPAddress);
+			timeout = this.getConfig().getInt("LEDIPAddress.timeout");
+			shortTimeout = this.getConfig().getInt("LEDIPAddress.shortTimeout");
+			getLogger().info("freshIPAddress is set to " + IPAddressString);
 		} else {
 			getLogger().info("config file already exists");	
 			// Attempt to read config file
 			this.getConfig().options().copyDefaults(false);
-			String newIPAddress = this.getConfig().getString("LEDIPAddress.IPAddress");
-			getLogger().info("newFromFileIPAddress is set to " + newIPAddress);
-			//TODO This line just to stop null pointer error, needs removing
-			udpIPAddress = newIPAddress;
+			String IPAddressString = this.getConfig().getString("LEDIPAddress.IPAddress");
+			getLogger().info("newFromFileIPAddress is set to " + IPAddressString); 
 			//TODO check whether these fail if values aren't integers
 			Integer newTimeout = this.getConfig().getInt("LEDIPAddress.timeout");
 			Integer newShortTimeout = this.getConfig().getInt("LEDIPAddress.shortTimeout");
@@ -327,20 +327,40 @@ public final class Main extends JavaPlugin implements Listener {
 			 */
 			try {
 				//Test this new address first as tempIPAddress
-				InetAddress tempIPAddress = InetAddress.getByName(newIPAddress);
-				if (tempIPAddress.isReachable(timeout)) {
+				InetAddress IPAddress = InetAddress.getByName(IPAddressString);
+				String testIPResult = checkIPAddress(IPAddress);
+				switch (testIPResult) {
+				case "running":	
+					getLogger().info("Server is connecting correctly");	
+					break;
+				case "stopped":	
+					getLogger().info("Server is connected but application not running");	
+					break;
+				case "unreachable":	
+					getLogger().info("Server is not connecting correctly");	
+					break;
+				case "loopback":	
+					getLogger().info("Server is not configured or using loopback address");	
+					break;
+				case "error":	
+					getLogger().info("Something has gone wrong");	
+					break;
+				}
+
+				/*if (IPAddress.isReachable(timeout)) {
 					//TODO Confirm that udpServerLED is running on proposed target
-					udpTransmit ("Oggy_Oggy_Oggy");
+					udpTransmit ("Oggy_Oggy_Oggy", tempIPAddress);
 					//Check if response is Oi_Oi_Oi
 					getLogger().info(tempIPAddress + " is reachable");
-					udpIPAddress = newIPAddress;
-					getLogger().info("IPAddress is now set to " + udpIPAddress);
+					IPAddressString = newIPAddress;
+					getLogger().info("IPAddress is now set to " + IPAddressString);
 				} else {
 					getLogger().info(tempIPAddress + " is not reachable");
 					getLogger().info("Reverting to loopback default of 127.0.0.1");
-					udpIPAddress = defaultIPAddress;
+					IPAddressString = defaultIPAddress;
 					saveConfig();
 				}
+				*/
 			} catch (Exception e) {
 				    	//TODO Better error handling than this lazy cop out
 				    	e.printStackTrace();
@@ -364,16 +384,16 @@ public final class Main extends JavaPlugin implements Listener {
 			InetAddress IPAddressProposed = InetAddress.getByName(AddressProposed);
 			if (IPAddressProposed.isReachable(timeout)) {
 				//TODO Confirm that udpServerLED is running on proposed target
-				udpTransmit ("Oggy_Oggy_Oggy");
+				udpTransmit ("Oggy_Oggy_Oggy", IPAddressProposed);
 				//Check if response is Oi_Oi_Oi
 				getLogger().info("proposedIPAddress is set to " + AddressProposed);
-				udpIPAddress = AddressProposed;
+				IPAddressString = AddressProposed;
 				this.getConfig().set("LEDIPAddress.IPAddress", AddressProposed);
 				saveConfig();
 				reinitialiseLED();
 			} else {
 	    		getLogger().info("IP address not working, resorting to previous");	
-	    		this.getConfig().set("LEDIPAddress.IPAddress", udpIPAddress);
+	    		this.getConfig().set("LEDIPAddress.IPAddress", IPAddressString);
 	    	}
 			saveConfig();
 			reinitialiseLED();
@@ -435,22 +455,35 @@ public final class Main extends JavaPlugin implements Listener {
     
     //TODO Test method to check if a proposed new IP address is valid.
     // Work out how best to do this.
-    /*
-    private boolean checkIPAddress (InetAddress proposedIP) {
-    	try {
-    		if (proposedIP.isReachable(timeout)) {
-    			return true;
-    		} else {
-    		return false;
+    private String checkIPAddress (InetAddress proposedIP) {    	
+		if (!(proposedIP.getHostAddress().startsWith("127"))) {
+    		try {
+    			if (proposedIP.isReachable(timeout)) {
+    				if (udpTransmit("Oggy_Oggy_Oggy", proposedIP).equals("Oi_Oi_Oi")) {
+    					//Server running at this IP address
+    					return("running");
+    				} else {
+    					//IP address valid but no server
+    					return("stopped");
+    				}
+    			} else {
+    			//IP address not reachable
+    			return("unreachable");
+    			}
+    		} catch (Exception e) {
+    			//TODO Clarify this lazy cop out
+    			/*
+    			 * Caused by either network error or negative timeout value
+    			 */
+    			e.printStackTrace();
+    			return("error");
     		}
-    	} catch (Exception e) {
-        	//TODO Clarify this lazy cop out
-            e.printStackTrace();
-            return false;
-        }	
+		} else {
+			// Part of the loopback range
+			return("loopback");
+		}
     }
-    */
-    
+
     private static boolean isInteger(String str) {
         if (str == null) {
             return false;
