@@ -212,7 +212,7 @@ public final class Main extends JavaPlugin implements Listener {
 					clientSocket.receive(receivePacket);
 					InetAddress IPAddressRec = receivePacket.getAddress();
 					int port = receivePacket.getPort();
-					if (IPAddressRec.equals("Oggy_Oggy_Oggy")) {
+					if (IPAddressRec.equals("Oi_Oi_Oi")) {
 							returnMessage= "Oi_Oi_Oi"
 ;					} else {
 					getLogger().info("Got this from " + IPAddressRec + " @ port " + port);
