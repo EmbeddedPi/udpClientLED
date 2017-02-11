@@ -192,8 +192,8 @@ public final class Main extends JavaPlugin implements Listener {
 	// public void udpTransmit(String message) {
     public String udpTransmit(String message, InetAddress IPAddress) {		
     	getLogger().info("Starting udpTransmit()");
-		byte[] sendData = new byte[16];
-		byte[] receiveData = new byte[32];
+		byte[] sendData = new byte[13];
+		byte[] receiveData = new byte[35];
 		String returnMessage;
 		// String sentence = inFromUser.readLine();
 		try {
@@ -202,9 +202,11 @@ public final class Main extends JavaPlugin implements Listener {
 			//InetAddress IPAddress = InetAddress.getByName(udpIPAddress);
 			if (IPAddress.isReachable(shortTimeout)) {
 				getLogger().info(IPAddressString + " is reachable");
+				//byte[] sendData = new byte[6];
 				sendData = message.getBytes();
 				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
 				clientSocket.send(sendPacket);
+				getLogger().info("Sending packet from udpTransmit, length =" + sendData.length);
 				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 				getLogger().info("Set to receive packet from within udpTransmit");
 				//Hangs here if reply not received
@@ -213,8 +215,9 @@ public final class Main extends JavaPlugin implements Listener {
 					InetAddress IPAddressRec = receivePacket.getAddress();
 					int port = receivePacket.getPort();
 					if (IPAddressRec.equals("Oi_Oi_Oi")) {
-							returnMessage= "Oi_Oi_Oi"
-;					} else {
+							returnMessage= "Oi_Oi_Oi";
+					} else {
+					getLogger().info("Receiving packet from udpTransmit, length =" + receiveData.length);
 					getLogger().info("Got this from " + IPAddressRec + " @ port " + port);
 					String modifiedSentence = new String(receivePacket.getData());
 					getLogger().info("FROM SERVER:" + modifiedSentence);
@@ -384,7 +387,7 @@ public final class Main extends JavaPlugin implements Listener {
 			InetAddress IPAddressProposed = InetAddress.getByName(AddressProposed);
 			if (IPAddressProposed.isReachable(timeout)) {
 				//TODO Confirm that udpServerLED is running on proposed target
-				udpTransmit ("Oggy_Oggy_Oggy", IPAddressProposed);
+				udpTransmit("Oggy_Oggy_Oggy", IPAddressProposed);
 				//Check if response is Oi_Oi_Oi
 				getLogger().info("proposedIPAddress is set to " + AddressProposed);
 				IPAddressString = AddressProposed;
@@ -459,13 +462,14 @@ public final class Main extends JavaPlugin implements Listener {
 		if (!(proposedIP.getHostAddress().startsWith("127"))) {
     		try {
     			if (proposedIP.isReachable(timeout)) {
-    				if (udpTransmit("Oggy_Oggy_Oggy", proposedIP).equals("Oi_Oi_Oi")) {
+    				udpTransmit("Oggy_Pgy_Pby6", proposedIP);
+    				//if (udpTransmit("Pggy_Pggy_Pggy", proposedIP).equals("Oi_Oi_Oi")) {
     					//Server running at this IP address
     					return("running");
-    				} else {
+    				//} else {
     					//IP address valid but no server
-    					return("stopped");
-    				}
+    				//	return("stopped");
+    				//}
     			} else {
     			//IP address not reachable
     			return("unreachable");
