@@ -192,8 +192,8 @@ public final class Main extends JavaPlugin implements Listener {
 	// public void udpTransmit(String message) {
     public String udpTransmit(String message, InetAddress IPAddress) {		
     	getLogger().info("Starting udpTransmit()");
-		byte[] sendData = new byte[13];
-		byte[] receiveData = new byte[35];
+		//byte[] sendData = new byte[11];
+		byte[] receiveData = new byte[20];
 		String returnMessage;
 		// String sentence = inFromUser.readLine();
 		try {
@@ -203,7 +203,7 @@ public final class Main extends JavaPlugin implements Listener {
 			if (IPAddress.isReachable(shortTimeout)) {
 				getLogger().info(IPAddressString + " is reachable");
 				//byte[] sendData = new byte[6];
-				sendData = message.getBytes();
+				byte[]sendData = message.getBytes();
 				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
 				clientSocket.send(sendPacket);
 				getLogger().info("Sending packet from udpTransmit, length =" + sendData.length);
@@ -462,7 +462,7 @@ public final class Main extends JavaPlugin implements Listener {
 		if (!(proposedIP.getHostAddress().startsWith("127"))) {
     		try {
     			if (proposedIP.isReachable(timeout)) {
-    				udpTransmit("Oggy_Pgy_Pby6", proposedIP);
+    				udpTransmit("Oggy_Oggy_Oggy", proposedIP);
     				//if (udpTransmit("Pggy_Pggy_Pggy", proposedIP).equals("Oi_Oi_Oi")) {
     					//Server running at this IP address
     					return("running");
