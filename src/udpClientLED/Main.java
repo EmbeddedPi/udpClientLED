@@ -190,21 +190,17 @@ public final class Main extends JavaPlugin implements Listener {
      */
     
 	// public void udpTransmit(String message) {
-    public String udpTransmit(String message, InetAddress IPAddress) {		
+    public String udpTransmit(String message, InetAddress udpIPAddress) {		
     	getLogger().info("Starting udpTransmit()");
-		//byte[] sendData = new byte[11];
 		byte[] receiveData = new byte[20];
 		String returnMessage;
-		// String sentence = inFromUser.readLine();
 		try {
 			DatagramSocket clientSocket = new DatagramSocket();
 			clientSocket.setSoTimeout(timeout);
-			//InetAddress IPAddress = InetAddress.getByName(udpIPAddress);
-			if (IPAddress.isReachable(shortTimeout)) {
-				getLogger().info(IPAddressString + " is reachable");
-				//byte[] sendData = new byte[6];
-				byte[]sendData = message.getBytes();
-				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
+			if (udpIPAddress.isReachable(shortTimeout)) {
+				getLogger().info(udpIPAddress + " is reachable");
+				byte[] sendData = message.getBytes();
+				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, udpIPAddress, 9876);
 				clientSocket.send(sendPacket);
 				getLogger().info("Sending packet from udpTransmit, length =" + sendData.length);
 				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
@@ -214,14 +210,14 @@ public final class Main extends JavaPlugin implements Listener {
 					clientSocket.receive(receivePacket);
 					InetAddress IPAddressRec = receivePacket.getAddress();
 					int port = receivePacket.getPort();
-					if (IPAddressRec.equals("Oi_Oi_Oi")) {
-							returnMessage= "Oi_Oi_Oi";
-					} else {
+					String modifiedSentence = new String(receivePacket.getData());
 					getLogger().info("Receiving packet from udpTransmit, length =" + receiveData.length);
 					getLogger().info("Got this from " + IPAddressRec + " @ port " + port);
-					String modifiedSentence = new String(receivePacket.getData());
+					if (modifiedSentence.equals("Oi_Oi_Oi")) {
+							returnMessage= "Oi_Oi_Oi";
+					} else {
 					getLogger().info("FROM SERVER:" + modifiedSentence);
-					getLogger().info("IPAddress = " + IPAddress);
+					getLogger().info("IPAddress = " + udpIPAddress);
 					returnMessage = "Success";
                     }
 				} catch (SocketTimeoutException e) {
@@ -233,7 +229,7 @@ public final class Main extends JavaPlugin implements Listener {
 					clientSocket.close();
 					return(returnMessage);
 			} else {
-				getLogger().info(IPAddressString + " is not reachable");
+				getLogger().info(udpIPAddress + " is not reachable");
 				clientSocket.close();
 				return("Not reachable");						
 					}
@@ -315,7 +311,7 @@ public final class Main extends JavaPlugin implements Listener {
 			// Attempt to read config file
 			this.getConfig().options().copyDefaults(false);
 			String IPAddressString = this.getConfig().getString("LEDIPAddress.IPAddress");
-			getLogger().info("newFromFileIPAddress is set to " + IPAddressString); 
+			getLogger().info("newFromFileIPAddressString is set to " + IPAddressString); 
 			//TODO check whether these fail if values aren't integers
 			Integer newTimeout = this.getConfig().getInt("LEDIPAddress.timeout");
 			Integer newShortTimeout = this.getConfig().getInt("LEDIPAddress.shortTimeout");
@@ -331,7 +327,9 @@ public final class Main extends JavaPlugin implements Listener {
 			try {
 				//Test this new address first as tempIPAddress
 				InetAddress IPAddress = InetAddress.getByName(IPAddressString);
+				getLogger().info("IPAddress is set to " + IPAddress);
 				String testIPResult = checkIPAddress(IPAddress);
+				getLogger().info("checkIPAddress() returned " + testIPResult);
 				switch (testIPResult) {
 				case "running":	
 					getLogger().info("Server is connecting correctly");	
@@ -458,19 +456,26 @@ public final class Main extends JavaPlugin implements Listener {
     
     //TODO Test method to check if a proposed new IP address is valid.
     // Work out how best to do this.
-    private String checkIPAddress (InetAddress proposedIP) {    	
+    private String checkIPAddress (InetAddress proposedIP) {
+    	getLogger().info("[checkIPAddress]Starting checkIPAddress() with " + proposedIP);
 		if (!(proposedIP.getHostAddress().startsWith("127"))) {
+			getLogger().info("[checkIPAddress]Not loopback address");
     		try {
+    			getLogger().info("[checkIPAddress]timeout is " + timeout);
+    			//TODO This line isn't returning a reachable result despite valid IP address
     			if (proposedIP.isReachable(timeout)) {
-    				udpTransmit("Oggy_Oggy_Oggy", proposedIP);
-    				//if (udpTransmit("Pggy_Pggy_Pggy", proposedIP).equals("Oi_Oi_Oi")) {
+    				getLogger().info("[checkIPAddress]Reachable");
+    				String testTransmit = udpTransmit("Oggy_Oggy_Oggy", proposedIP);
+    				if (testTransmit.equals("Oi_Oi_Oi")) {
     					//Server running at this IP address
     					return("running");
-    				//} else {
+    				} else {
+    					
     					//IP address valid but no server
-    				//	return("stopped");
-    				//}
+    					return("stopped");
+    				}
     			} else {
+    			getLogger().info("[checkIPAddress]Not reachable");
     			//IP address not reachable
     			return("unreachable");
     			}
@@ -479,11 +484,13 @@ public final class Main extends JavaPlugin implements Listener {
     			/*
     			 * Caused by either network error or negative timeout value
     			 */
+    			getLogger().info("[checkIPAddress]Pear shaped");
     			e.printStackTrace();
     			return("error");
     		}
 		} else {
 			// Part of the loopback range
+			getLogger().info("[checkIPAddress]Loopback");
 			return("loopback");
 		}
     }
