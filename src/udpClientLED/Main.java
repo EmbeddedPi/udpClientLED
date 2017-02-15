@@ -48,6 +48,8 @@ public final class Main extends JavaPlugin implements Listener {
 		loadConfiguration();
 		//getLogger().info("Returned from loadConfiguration()");
 		getLogger().info("[onEnable]IPAddress is set to " + IPAddress);
+		getLogger().info("[onEnable]timeout is set to " + timeout);
+		getLogger().info("[onEnable]shortTimeout is set to " + shortTimeout);
 		// Indicate that plugin has started with a light display
 		udpTransmit ("Funky_Disco", IPAddress);
 		getLogger().info("[onEnable]udpClientLED is switched on"); 
@@ -300,11 +302,18 @@ public final class Main extends JavaPlugin implements Listener {
 		if (!configFile.exists()) {
 			getLogger().info("[loadConfiguration]Plugin hasn't been configured so creating config");
 			this.getConfig().options().copyDefaults(true);
-			//TODO Look at fixing ownership properly
 			configFile.getParentFile().mkdirs();
 			copy(getResource("config.yml"), configFile);
 			//Assign IP address directly as plugin default loopback IP so safe
 			String IPAddressString = this.getConfig().getString("LEDIPAddress.IPAddress");
+			try {
+				IPAddress = InetAddress.getByName(IPAddressString);	
+				} catch (Exception e) {
+					getLogger().info("[loadConfiguration]Default config file possibly corrupt");	
+			    	e.printStackTrace();
+				}
+			this.getConfig().set("LEDIPAddress.IPAddress", IPAddress);
+			saveConfig();
 			//Similarly assign timeouts from defaults
 			timeout = this.getConfig().getInt("LEDIPAddress.timeout");
 			shortTimeout = this.getConfig().getInt("LEDIPAddress.shortTimeout");
@@ -328,11 +337,20 @@ public final class Main extends JavaPlugin implements Listener {
 			 * 
 			 */
 			try {
-				//Test this new address first as tempIPAddress
 				IPAddress = InetAddress.getByName(IPAddressString);
 				} catch (Exception e) {
-		    	//TODO Better error handling than this lazy cop out
 					getLogger().info("[loadConfiguration]InetAddress has probably thrown unknownHost Exception with " + IPAddressString);	
+					//TODO load config file loopback default.
+					IPAddressString = localHost;
+					saveConfig();
+					try {
+						IPAddress = InetAddress.getByName(IPAddressString);	
+						} catch (Exception e2) {
+							getLogger().info("[loadConfiguration]localHost variable definition invalid");	
+					    	e2.printStackTrace();
+						}
+					this.getConfig().set("LEDIPAddress.IPAddress", IPAddress);
+					saveConfig();
 		    	e.printStackTrace();
 				}					
 			getLogger().info("[loadConfiguration]IPAddress is set to " + IPAddress);
