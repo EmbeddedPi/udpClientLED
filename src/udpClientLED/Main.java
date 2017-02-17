@@ -194,55 +194,60 @@ public final class Main extends JavaPlugin implements Listener {
 	// public void udpTransmit(String message) {
     public String udpTransmit(String message, InetAddress udpIPAddress) {		
     	getLogger().info("[udpTransmit] is starting");
-    	getLogger().info("[udpTransmit]udpIPAddress is " + udpIPAddress);
-		byte[] receiveData = new byte[30];
-		String returnMessage;
-		try {
-			DatagramSocket clientSocket = new DatagramSocket();
-			clientSocket.setSoTimeout(timeout);
-			getLogger().info("[udpTransmit]Socket is defined");
-			if (udpIPAddress.isReachable(shortTimeout)) {
-				getLogger().info("[udpTransmit]" + udpIPAddress + " is reachable");
-				byte[] sendData = message.getBytes();
-				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, udpIPAddress, 9876);
-				clientSocket.send(sendPacket);
-				getLogger().info("[udpTransmit]Sending packet from udpTransmit, length =" + sendData.length);
-				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-				getLogger().info("[udpTransmit]Set to receive packet from within udpTransmit");
-				//Hangs here if reply not received
-				try {
-					clientSocket.receive(receivePacket);
-					InetAddress IPAddressRec = receivePacket.getAddress();
-					int port = receivePacket.getPort();
-					String modifiedSentence = new String(receivePacket.getData());
-					modifiedSentence = modifiedSentence.replaceAll("[^\\p{Print}]", "");
-					getLogger().info("[udpTransmit]Receiving packet from udpTransmit, length =" + receiveData.length);
-					getLogger().info("[udpTransmit]Got this from " + IPAddressRec + " @ port " + port);
-					if (modifiedSentence.equals("Oi_Oi_Oi")) {
+    	getLogger().info("[udpTransmit]IPAddress is " + udpIPAddress);
+    	getLogger().info("[udpTransmit][DEBUG]getHostAddress is " + udpIPAddress.getHostAddress());
+    	if (!udpIPAddress.getHostAddress().startsWith("127")) {
+    		byte[] receiveData = new byte[30];
+    		String returnMessage;
+    		try {
+    			DatagramSocket clientSocket = new DatagramSocket();
+    			clientSocket.setSoTimeout(timeout);
+    			getLogger().info("[udpTransmit]Socket is defined");
+    			if (udpIPAddress.isReachable(shortTimeout)) {
+    				getLogger().info("[udpTransmit]" + udpIPAddress + " is reachable");
+    				byte[] sendData = message.getBytes();
+    				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, udpIPAddress, 9876);
+    				clientSocket.send(sendPacket);
+    				getLogger().info("[udpTransmit]Sending packet from udpTransmit, length =" + sendData.length);
+    				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+    				getLogger().info("[udpTransmit]Set to receive packet from within udpTransmit");
+    				//Hangs here if reply not received
+    				try {
+    					clientSocket.receive(receivePacket);
+    					InetAddress IPAddressRec = receivePacket.getAddress();
+    					int port = receivePacket.getPort();
+    					String modifiedSentence = new String(receivePacket.getData());
+    					modifiedSentence = modifiedSentence.replaceAll("[^\\p{Print}]", "");
+    					getLogger().info("[udpTransmit]Receiving packet from udpTransmit, length =" + receiveData.length);
+    					getLogger().info("[udpTransmit]Got this from " + IPAddressRec + " @ port " + port);
+    					if (modifiedSentence.equals("Oi_Oi_Oi")) {
 							returnMessage= "Oi_Oi_Oi";
-					} else {
-					getLogger().info("[udpTransmit]FROM SERVER:" + modifiedSentence);
-					getLogger().info("[udpTransmit]udpIPAddress = " + udpIPAddress);
-					returnMessage = "Success";
-                    }
-				} catch (SocketTimeoutException e) {
-					//Timeout waiting for reply
-					getLogger().info("[udpTransmit]Didn't get a reply within timeout");
-					returnMessage = "Timeout";
-				}
-		
+    					} else {
+    						getLogger().info("[udpTransmit]FROM SERVER:" + modifiedSentence);
+    						getLogger().info("[udpTransmit]udpIPAddress = " + udpIPAddress);
+    						returnMessage = "Success";
+    					}
+    				} catch (SocketTimeoutException e) {
+    					//Timeout waiting for reply
+    					getLogger().info("[udpTransmit]Didn't get a reply within timeout");
+    					returnMessage = "Timeout";
+    				}
 					clientSocket.close();
 					return(returnMessage);
-			} else {
-				getLogger().info("[udpTransmit]" + udpIPAddress + " is not reachable");
-				clientSocket.close();
-				return("Not reachable");						
+    			} else {
+    				getLogger().info("[udpTransmit]" + udpIPAddress + " is not reachable");
+    				clientSocket.close();
+    				return("Not reachable");						
 					}
-			} catch (Exception e) {
-				//TODO Better error handling than this lazy cop out
-				e.printStackTrace();
-				return("Error");
-			}
+				} catch (Exception e) {
+					//TODO Better error handling than this lazy cop out
+					e.printStackTrace();
+					return("Error");
+				}
+    		} else {
+    			getLogger().info("[udpTransmit]Loopback address of " + udpIPAddress + " so not transmitting");
+    			return("loopback");
+    		}
 	}
 	
 	// Determine whether the player is local on login/logout
@@ -293,12 +298,6 @@ public final class Main extends JavaPlugin implements Listener {
 		// Create virtual config file
     	getLogger().info("[loadConfiguration] is starting");
     	File configFile = new File(getDataFolder(), "config.yml");
-    	// Set defaults as variables that can be reverted to if necessary
-    	//String defaultIPAddress = this.getConfig().getString("LEDIPAddress.IPAddress");
-    	//TODO Check what happens if these don't return integers
-    	//Integer defaultTimeout = this.getConfig().getInt("LEDIPAddress.timeout");
-    	//Integer defaultShortTimeout = this.getConfig().getInt("LEDIPAddress.shortTimeout");
-		// Check config exists or set up if it doesn't
 		if (!configFile.exists()) {
 			getLogger().info("[loadConfiguration]Plugin hasn't been configured so creating config");
 			this.getConfig().options().copyDefaults(true);
@@ -312,12 +311,12 @@ public final class Main extends JavaPlugin implements Listener {
 					getLogger().info("[loadConfiguration]Default config file possibly corrupt");	
 			    	e.printStackTrace();
 				}
-			this.getConfig().set("LEDIPAddress.IPAddress", IPAddress);
-			saveConfig();
+			//this.getConfig().set("LEDIPAddress.IPAddress", IPAddress);
+			//saveConfig();
 			//Similarly assign timeouts from defaults
 			timeout = this.getConfig().getInt("LEDIPAddress.timeout");
 			shortTimeout = this.getConfig().getInt("LEDIPAddress.shortTimeout");
-			getLogger().info("[loadConfiguration]freshIPAddress is set to " + IPAddressString);
+			getLogger().info("[loadConfiguration]IPAddressString is set to " + IPAddressString);
 		} else {
 			getLogger().info("[loadConfiguration]config file already exists");	
 			// Attempt to read config file
@@ -393,7 +392,7 @@ public final class Main extends JavaPlugin implements Listener {
 				}
 				*/		
 		}
-		getLogger().info("[loadConfiguration]Final IPAddress is  " + IPAddress); 
+		getLogger().info("[loadConfiguration]IPAddress is  " + IPAddress); 
     }
     
     /* Loads config.yml from disc and updates fields
