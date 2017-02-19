@@ -311,7 +311,8 @@ public final class Main extends JavaPlugin implements Listener {
 					getLogger().info("[loadConfiguration]Default config file possibly corrupt");	
 			    	e.printStackTrace();
 				}
-			//this.getConfig().set("LEDIPAddress.IPAddress", IPAddress);
+			//TODO Check this line is OK
+			this.getConfig().set("LEDIPAddress.IPAddress", IPAddress);
 			//saveConfig();
 			//Similarly assign timeouts from defaults
 			timeout = this.getConfig().getInt("LEDIPAddress.timeout");
