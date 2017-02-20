@@ -304,15 +304,15 @@ public final class Main extends JavaPlugin implements Listener {
 			configFile.getParentFile().mkdirs();
 			copy(getResource("config.yml"), configFile);
 			//Assign IP address directly as plugin default loopback IP so safe
-			String IPAddressString = this.getConfig().getString("LEDIPAddress.IPAddress");
+			IPAddressString = this.getConfig().getString("LEDIPAddress.IPAddress");
 			try {
 				IPAddress = InetAddress.getByName(IPAddressString);	
 				} catch (Exception e) {
 					getLogger().info("[loadConfiguration]Default config file possibly corrupt");	
 			    	e.printStackTrace();
 				}
-			//TODO Check this line is OK
-			this.getConfig().set("LEDIPAddress.IPAddress", IPAddress);
+			//TODO Get shot of this lot
+			//this.getConfig().set("LEDIPAddress.IPAddress", IPAddress);
 			//saveConfig();
 			//Similarly assign timeouts from defaults
 			timeout = this.getConfig().getInt("LEDIPAddress.timeout");
