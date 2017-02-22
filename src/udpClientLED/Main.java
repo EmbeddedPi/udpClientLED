@@ -186,10 +186,6 @@ public final class Main extends JavaPlugin implements Listener {
         return false;
     	}
     }
-    //TODO Change this so it accepts an IP address in addition to transmission string.
-    /*
-     * This will enable an IP address to be tested without being committed as udpIPAddress
-     */
     
 	// public void udpTransmit(String message) {
     public String udpTransmit(String message, InetAddress udpIPAddress) {		
@@ -239,21 +235,19 @@ public final class Main extends JavaPlugin implements Listener {
     				clientSocket.close();
     				return("Not reachable");						
 					}
-				} catch (Exception e) {
-					//TODO Better error handling than this lazy cop out
-					e.printStackTrace();
-					return("Error");
-				}
-    		} else {
-    			getLogger().info("[udpTransmit]Loopback address of " + udpIPAddress + " so not transmitting");
-    			return("loopback");
-    		}
+			} catch (Exception e) {
+				getLogger().info("Socket could not be opened or network security error");
+				e.printStackTrace();
+				return("Error");
+			}
+    	} else {
+    		getLogger().info("[udpTransmit]Loopback address of " + udpIPAddress + " so not transmitting");
+    		return("Loopback");
+    	}
 	}
 	
 	// Determine whether the player is local on login/logout
 	private Boolean isLocal(InetAddress addr) {
-		//getLogger().info("Address passed to getRouter is " + addr);
-		//getLogger().info("routerIP passed to getRouter is " + routerIP);
     	// Count players coming from router's address as external
 		if (addr.equals(routerIP)) {
 			getLogger().info("[isLocal] decided player came via router.");
@@ -292,12 +286,16 @@ public final class Main extends JavaPlugin implements Listener {
     }
     
     /*
-     * This reads from changed values fine (IPAddress)
+     * Loads form existing config file or sets up default one.
      */
     public void loadConfiguration() { 
 		// Create virtual config file
     	getLogger().info("[loadConfiguration] is starting");
     	File configFile = new File(getDataFolder(), "config.yml");
+    	/*
+    	 * If this is the first time that plugin has run or config file not present
+    	 * then copy from default config file.
+    	 */
 		if (!configFile.exists()) {
 			getLogger().info("[loadConfiguration]Plugin hasn't been configured so creating config");
 			this.getConfig().options().copyDefaults(true);
@@ -308,107 +306,111 @@ public final class Main extends JavaPlugin implements Listener {
 			try {
 				IPAddress = InetAddress.getByName(IPAddressString);	
 				} catch (Exception e) {
-					getLogger().info("[loadConfiguration]Default config file possibly corrupt");	
+					getLogger().info("[loadConfiguration]Default config file in plugin possibly corrupt, download again.");	
 			    	e.printStackTrace();
 				}
 			//Similarly assign timeouts from defaults
 			timeout = this.getConfig().getInt("LEDIPAddress.timeout");
 			shortTimeout = this.getConfig().getInt("LEDIPAddress.shortTimeout");
-			getLogger().info("[loadConfiguration]IPAddressString is set to " + IPAddressString);
+			//Debug lines to deleted later
+			getLogger().info("[loadConfiguration][DEBUG]new IPAddressString is " + IPAddressString);
+			getLogger().info("[loadConfiguration][DEBUG]new IPAddress is " + IPAddress);
+			getLogger().info("[loadConfiguration][DEBUG]new timeout is " + timeout);
+			getLogger().info("[loadConfiguration][DEBUG]new shortTimeOut is " + shortTimeout);	
+		/*
+		 * Otherwise attempt to load from existing config file and set any
+		 * invalid parameters to default
+		 */
 		} else {
 			getLogger().info("[loadConfiguration]config file already exists");	
+			/*
+			 * TODO Probably replace all of this with updateConfig() bar saving of current variables
+			 * TODO Possibly use string parameter of reload for updateConfig() command and load for this
+			 */
 			//Read config file and assign values
 			this.getConfig().options().copyDefaults(false);
-			IPAddressString = this.getConfig().getString("LEDIPAddress.IPAddress");
+			//The integers will be set to default if not valid so saved back to config at end of method
 			timeout = this.getConfig().getInt("LEDIPAddress.timeout");
 			shortTimeout = this.getConfig().getInt("LEDIPAddress.shortTimeout");
-			//Debug lines for testing to be deleted later
-			getLogger().info("[loadConfiguration][DEBUG]IPAddressString from file is " + IPAddressString); 
-			getLogger().info("[loadConfiguration][DEBUG]timeout from file is " + timeout);
-			getLogger().info("[loadConfiguration][DEBUG]shortTimeOut from file is " + shortTimeout);
-			//If setting integer fails then default timeouts will be loaded but not saved to file so do this
-			this.getConfig().set("LEDIPAddress.timeout", timeout);
-			this.getConfig().set("LEDIPAddress.shortTimeout", shortTimeout);
-			saveConfig();
-			//Test if IP address will work
+			IPAddressString = this.getConfig().getString("LEDIPAddress.IPAddress");
+			//Test if IP address is valid and set to localHost if not
 			try {
 				IPAddress = InetAddress.getByName(IPAddressString);
 			} catch (Exception e) {
 				getLogger().info("[loadConfiguration]InetAddress has thrown unknownHostException trying to resolve " + IPAddressString);	
-				//TODO load config file loopback default.
+				getLogger().info("[loadConfiguration]Setting IPAddress to loopback default");	
 				IPAddressString = localHost;
-				//saveConfig();
 				try {
 					IPAddress = InetAddress.getByName(IPAddressString);	
 				} catch (Exception e2) {
-					getLogger().info("[loadConfiguration]localHost variable definition invalid");	
+					getLogger().info("[loadConfiguration]localHost variable definition invalid, download plugin again.");
+					   //TODO Possibly remove printStackTrace if error resolved correctly
 					   e2.printStackTrace();
 				}
+				//TODO Possibly remove printStackTrace if error resolved correctly
 				e.printStackTrace();
-			}					
-			getLogger().info("[loadConfiguration]IPAddress is set to " + IPAddress);
-			String testIPResult = checkIPAddress(IPAddress);
-			getLogger().info("[loadConfiguration][ DEBUG]checkIPAddress() returned " + testIPResult);
-			switch (testIPResult) {
-				case "running":	
-					getLogger().info("[loadConfiguration]Server is connecting correctly");	
-					getLogger().info("[loadConfiguration]IPAddress is set to " + IPAddress);
-					break;
-				case "stopped":	
-					getLogger().info("[loadConfiguration]Server is connected but application not running");	
-					getLogger().info("[loadConfiguration]IPAddress is set to " + IPAddress);
-					break;
-				case "unreachable":	
-					getLogger().info("[loadConfiguration]Server is not connecting correctly");	
-					getLogger().info("[loadConfiguration]IPAddress is set to " + IPAddress);
-					break;
-				case "loopback":	
-					getLogger().info("[loadConfiguration]Server is not configured or using loopback address");	
-					getLogger().info("[loadConfiguration]IPAddress is set to " + IPAddress);
-					break;
-				case "error":	
-					getLogger().info("[loadConfiguration]Something has gone wrong");
-					getLogger().info("[loadConfiguration]IPAddress is set to " + IPAddress);
-					break;
-			}	
-		}
-		getLogger().info("[loadConfiguration]IPAddress is  " + IPAddress);
-		this.getConfig().set("LEDIPAddress.IPAddress", IPAddress);
+			}
+			//Debug lines for testing to be deleted later
+			getLogger().info("[loadConfiguration][DEBUG]IPAddressString from file is " + IPAddressString); 
+			getLogger().info("[loadConfiguration][DEBUG]timeout from file is " + timeout);
+			getLogger().info("[loadConfiguration][DEBUG]shortTimeOut from file is " + shortTimeout);
+			getLogger().info("[loadConfiguration][DEBUG]IPAddress from file " + IPAddress);
+			//Check report server status for loaded IP address 
+			checkIPAddress(IPAddress);
+		//Ensure that saved config file matches loaded one (convert IPAddress to string first)
+		getLogger().info("[loadConfiguration][DEBUG]IPAddress.getHostAddress is  " + IPAddress.getHostAddress());
+		this.getConfig().set("LEDIPAddress.IPAddress", IPAddress.getHostAddress());
+		this.getConfig().set("LEDIPAddress.timeout", timeout);
+		this.getConfig().set("LEDIPAddress.shortTimeout", shortTimeout);
 		saveConfig();
+		}
+	//TODO Test lines to be deleted later
+	//getLogger().info("[loadConfiguration][DEBUG]Final IPAddressString is " + IPAddressString); 
+	getLogger().info("[loadConfiguration][DEBUG]Final IPAddress is  " + IPAddress); 
+	getLogger().info("[loadConfiguration][DEBUG]Final timeout is " + timeout);
+	getLogger().info("[loadConfiguration][DEBUG]Final shortTimeOut is " + shortTimeout);
     }
-    
-    /* Loads config.yml from disc and updates fields
+
+	/* Loads config.yml from disc and updates fields
      * 
      */
     private void updateConfig() {
+    	//Store current values
+    	InetAddress currentIPAddress = IPAddress;
+    	getLogger().info("[updateConfig]Current IPAddress is " + currentIPAddress);
+    	Integer currentShortTimeout = shortTimeout;
+    	getLogger().info("[updateConfig]Current shortTimeout is " + currentShortTimeout);
+    	Integer currentTimeout = timeout;
+    	getLogger().info("[updateConfig]Current timeout is " + currentTimeout);
     	//Load config from file to check values
     	reloadConfig();
-    	String AddressProposed = this.getConfig().getString("LEDIPAddress.IPAddress");
-    	getLogger().info("updateConfigIPAddressTemp is " + AddressProposed);
-    	Integer timeoutProposed = this.getConfig().getInt("LEDIPAddress.timeout");
-    	getLogger().info("updateConfigTimeoutTemp is " + timeoutProposed);
-    	Integer shortTimeoutProposed = this.getConfig().getInt("LEDIPAddress.shortTimeout");
-    	getLogger().info("updateConfigShortTimeoutTemp is " + shortTimeoutProposed);
+    	String proposedIPAddressString = this.getConfig().getString("LEDIPAddress.IPAddress");
+    	getLogger().info("[updateConfig]Proposed IPAddressString is " + proposedIPAddressString);
+    	Integer proposedTimeout = this.getConfig().getInt("LEDIPAddress.timeout");
+    	getLogger().info("[updateConfig]Proposed Timeout is " + proposedTimeout);
+    	Integer proposedShortTimeout = this.getConfig().getInt("LEDIPAddress.shortTimeout");
+    	getLogger().info("[updateConfig]Proposed ShortTimeout is " + proposedShortTimeout);
 		try {
-			InetAddress IPAddressProposed = InetAddress.getByName(AddressProposed);
-			if (IPAddressProposed.isReachable(timeout)) {
-				//TODO Confirm that udpServerLED is running on proposed target
-				udpTransmit("Oggy_Oggy_Oggy", IPAddressProposed);
-				//Check if response is Oi_Oi_Oi
-				getLogger().info("proposedIPAddress is set to " + AddressProposed);
-				IPAddressString = AddressProposed;
-				this.getConfig().set("LEDIPAddress.IPAddress", AddressProposed);
-				saveConfig();
-				reinitialiseLED();
+			InetAddress proposedIPAddress = InetAddress.getByName(proposedIPAddressString);
+			if (proposedIPAddress.isReachable(timeout)) {
+				//Confirm that udpServerLED is running on proposed target
+				checkIPAddress(proposedIPAddress);				
+				getLogger().info("[updateConfig]Proposed IPAddress of " + proposedIPAddress + " is reachable, keeping");
+				IPAddress = proposedIPAddress;
+				this.getConfig().set("LEDIPAddress.IPAddress", IPAddress.getHostAddress());
 			} else {
-	    		getLogger().info("IP address not working, resorting to previous");	
-	    		this.getConfig().set("LEDIPAddress.IPAddress", IPAddressString);
+	    		getLogger().info("[updateConfig]IP address " + proposedIPAddress + " not reachable, resorting to previous");	
+	    		this.getConfig().set("LEDIPAddress.IPAddress", currentIPAddress.getHostAddress());
 	    	}
 			saveConfig();
 			reinitialiseLED();
 		} catch (Exception e) {
-        	//TODO Clarify this lazy cop out
-            e.printStackTrace();
+			getLogger().info("[updateConfig]InetAddress has thrown unknownHostException trying to resolve " + proposedIPAddressString);	
+			getLogger().info("[updateConfig]Resorting to previous IPAddress of " + currentIPAddress);	
+			IPAddress = currentIPAddress;
+			this.getConfig().set("LEDIPAddress.IPAddress", IPAddress.getHostAddress());
+			//TODO Possibly remove printStackTrace if error resolved correctly
+			e.printStackTrace();
     	}
 		//TODO Check if timeout values are valid		
 		/*
@@ -430,6 +432,12 @@ public final class Main extends JavaPlugin implements Listener {
 		 * reinitialiseLED();
 
 		 * }
+		 */
+		saveConfig();
+		/*
+		 * TODO Switch off lED from old IP address
+		 * TODO Update LED status for new IP address
+		 * 
 		 */
     }
     
@@ -463,42 +471,34 @@ public final class Main extends JavaPlugin implements Listener {
     }
     
     //Method to check if a proposed new IP address is valid.
-    private String checkIPAddress (InetAddress proposedIP) {
-    	getLogger().info("[checkIPAddress]Starting with " + proposedIP);
+    private void checkIPAddress (InetAddress proposedIP) {
+    	//getLogger().info("[checkIPAddress]Starting with " + proposedIP);
 		if (!(proposedIP.getHostAddress().startsWith("127"))) {
-			getLogger().info("[checkIPAddress]Not loopback address");
+			//getLogger().info("[checkIPAddress]Not loopback address");
     		try {
     			getLogger().info("[checkIPAddress]timeout is " + timeout);
     			if (proposedIP.isReachable(timeout)) {
-    				getLogger().info("[checkIPAddress]Reachable");
+    				//getLogger().info("[checkIPAddress]Reachable");
     				String testTransmit = udpTransmit("Oggy_Oggy_Oggy", proposedIP);
-    				getLogger().info("[checkIPAddress]testTransmit = " + testTransmit);
+    				//getLogger().info("[checkIPAddress]testTransmit = " + testTransmit);
     				if (testTransmit.equals("Oi_Oi_Oi")) {
     					//Server running at this IP address
-    					return("running");
-    				} else {
-    					
+    					getLogger().info("[checkIPAddress]Server is connecting correctly");	
+    				} else {    					
     					//IP address valid but no server
-    					return("stopped");
+    					getLogger().info("[checkIPAddress]Server is connected but application not running");	
     				}
     			} else {
-    			getLogger().info("[checkIPAddress]Not reachable");
     			//IP address not reachable
-    			return("unreachable");
+				getLogger().info("[checkIPAddress]Server is not reachable within timeout");	
     			}
     		} catch (Exception e) {
-    			//TODO Clarify this lazy cop out
-    			/*
-    			 * Caused by either network error or negative timeout value
-    			 */
-    			getLogger().info("[checkIPAddress]Pear shaped");
+    			getLogger().info("[checkIPAddress]Network error or negative timeout value");
     			e.printStackTrace();
-    			return("error");
     		}
 		} else {
 			// Part of the loopback range
-			getLogger().info("[checkIPAddress]Loopback");
-			return("loopback");
+			getLogger().info("[checkIPAddress]Server is not configured or using loopback address");	
 		}
     }
 
