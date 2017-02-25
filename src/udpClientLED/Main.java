@@ -22,12 +22,19 @@ import java.io.OutputStream;
 
 public final class Main extends JavaPlugin implements Listener {
 	
+	/* 
+	 * TODO Combine these into a player status class
+	 */
 	private static short local = 0;
 	private static short notLocal = 0;
+	
 	private static final String localHost = "127.0.0.1";
 	private static InetAddress recentPlayerIP = null;
 	private static InetAddress routerIP = null;
 	private static String osName = null;
+	/*
+	 * TODO combine these into a settings class
+	 */
 	// Not initialised as these are set by file or config defaults
 	private static String IPAddressString;
 	private static InetAddress IPAddress;
@@ -261,6 +268,10 @@ public final class Main extends JavaPlugin implements Listener {
     	}
 	}
 	
+	/*
+	 * TODO Combine these two methods after counting players
+	 */
+	
     // Initialise LED after IP Address change
     private void reinitialiseLED() {
 		udpTransmit ("Red_On", IPAddress);
@@ -376,20 +387,22 @@ public final class Main extends JavaPlugin implements Listener {
      */
     private void updateConfig() {
     	//Store current values
-    	InetAddress currentIPAddress = IPAddress;
-    	getLogger().info("[updateConfig]Current IPAddress is " + currentIPAddress);
+    	InetAddress currentIPAddress = IPAddress;    	
     	Integer currentShortTimeout = shortTimeout;
-    	getLogger().info("[updateConfig]Current shortTimeout is " + currentShortTimeout);
     	Integer currentTimeout = timeout;
-    	getLogger().info("[updateConfig]Current timeout is " + currentTimeout);
+    	// TODO Debug lines to be removed later
+    	getLogger().info("[updateConfig][DEBUG]Current IPAddress is " + currentIPAddress);
+    	getLogger().info("[updateConfig][DEBUG]Current shortTimeout is " + currentShortTimeout);
+    	getLogger().info("[updateConfig][DEBUG]Current timeout is " + currentTimeout);
     	//Load config from file to check values
     	reloadConfig();
     	String proposedIPAddressString = this.getConfig().getString("LEDIPAddress.IPAddress");
-    	getLogger().info("[updateConfig]Proposed IPAddressString is " + proposedIPAddressString);
-    	Integer proposedTimeout = this.getConfig().getInt("LEDIPAddress.timeout");
-    	getLogger().info("[updateConfig]Proposed Timeout is " + proposedTimeout);
     	Integer proposedShortTimeout = this.getConfig().getInt("LEDIPAddress.shortTimeout");
-    	getLogger().info("[updateConfig]Proposed ShortTimeout is " + proposedShortTimeout);
+    	Integer proposedTimeout = this.getConfig().getInt("LEDIPAddress.timeout");
+    	// TODO Debug lines to be removed later
+    	getLogger().info("[updateConfig][DEBUG]Proposed IPAddressString is " + proposedIPAddressString);
+    	getLogger().info("[updateConfig][DEBUG]Proposed ShortTimeout is " + proposedShortTimeout);
+    	getLogger().info("[updateConfig][DEBUG]Proposed Timeout is " + proposedTimeout);
 		try {
 			InetAddress proposedIPAddress = InetAddress.getByName(proposedIPAddressString);
 			if (proposedIPAddress.isReachable(timeout)) {
@@ -437,7 +450,6 @@ public final class Main extends JavaPlugin implements Listener {
 		/*
 		 * TODO Switch off lED from old IP address
 		 * TODO Update LED status for new IP address
-		 * 
 		 */
     }
     
@@ -452,7 +464,7 @@ public final class Main extends JavaPlugin implements Listener {
             out.close();
             in.close();
         } catch (Exception e) {
-        	//TODO Clarify this lazy cop out
+        	getLogger().info("[copy]Error loading default config file.");
             e.printStackTrace();
         }
     }
