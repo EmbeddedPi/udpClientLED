@@ -134,13 +134,10 @@ public final class Main extends JavaPlugin implements Listener {
     		} else {
     			return false;
     	    }
-    	} else if (cmd.getName().equalsIgnoreCase("listUDPConfig")) {
-    		String IPAddressListed = this.getConfig().getString("LEDIPAddress.IPAddress");
-    		String timeoutListed = this.getConfig().getString("LEDIPAddress.timeout");
-    		String shortTimeoutListed = this.getConfig().getString("LEDIPAddress.shortTimeout");    		
-    		sender.sendMessage("IPAddress is set to " + IPAddressListed);
-    		sender.sendMessage("timeout is set to " + timeoutListed);
-    		sender.sendMessage("shortTimeout is set to " + shortTimeoutListed);
+    	} else if (cmd.getName().equalsIgnoreCase("listUDPConfig")) {  		
+    		sender.sendMessage("IPAddress is set to " + IPAddress);
+    		sender.sendMessage("shortTimeout is set to " + shortTimeout);
+    		sender.sendMessage("timeout is set to " + timeout);
     		return true;
     	} else if (cmd.getName().equalsIgnoreCase("updateUDPConfig")) {
     		updateConfig();
@@ -197,23 +194,23 @@ public final class Main extends JavaPlugin implements Listener {
 	// public void udpTransmit(String message) {
     public String udpTransmit(String message, InetAddress udpIPAddress) {		
     	getLogger().info("[udpTransmit] is starting");
-    	getLogger().info("[udpTransmit]IPAddress is " + udpIPAddress);
-    	getLogger().info("[udpTransmit][DEBUG]getHostAddress is " + udpIPAddress.getHostAddress());
+    	//getLogger().info("[udpTransmit]IPAddress is " + udpIPAddress);
+    	//getLogger().info("[udpTransmit][DEBUG]getHostAddress is " + udpIPAddress.getHostAddress());
     	if (!udpIPAddress.getHostAddress().startsWith("127")) {
     		byte[] receiveData = new byte[30];
     		String returnMessage;
     		try {
     			DatagramSocket clientSocket = new DatagramSocket();
     			clientSocket.setSoTimeout(timeout);
-    			getLogger().info("[udpTransmit]Socket is defined");
+    			//getLogger().info("[udpTransmit]Socket is defined");
     			if (udpIPAddress.isReachable(shortTimeout)) {
     				getLogger().info("[udpTransmit]" + udpIPAddress + " is reachable");
     				byte[] sendData = message.getBytes();
     				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, udpIPAddress, 9876);
     				clientSocket.send(sendPacket);
-    				getLogger().info("[udpTransmit]Sending packet from udpTransmit, length =" + sendData.length);
+    				//getLogger().info("[udpTransmit]Sending packet from udpTransmit, length =" + sendData.length);
     				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-    				getLogger().info("[udpTransmit]Set to receive packet from within udpTransmit");
+    				//getLogger().info("[udpTransmit]Set to receive packet from within udpTransmit");
     				//Hangs here if reply not received
     				try {
     					clientSocket.receive(receivePacket);
@@ -221,13 +218,13 @@ public final class Main extends JavaPlugin implements Listener {
     					int port = receivePacket.getPort();
     					String modifiedSentence = new String(receivePacket.getData());
     					modifiedSentence = modifiedSentence.replaceAll("[^\\p{Print}]", "");
-    					getLogger().info("[udpTransmit]Receiving packet from udpTransmit, length =" + receiveData.length);
+    					//getLogger().info("[udpTransmit]Receiving packet from udpTransmit, length =" + receiveData.length);
     					getLogger().info("[udpTransmit]Got this from " + IPAddressRec + " @ port " + port);
     					if (modifiedSentence.equals("Oi_Oi_Oi")) {
 							returnMessage= "Oi_Oi_Oi";
     					} else {
     						getLogger().info("[udpTransmit]FROM SERVER:" + modifiedSentence);
-    						getLogger().info("[udpTransmit]udpIPAddress = " + udpIPAddress);
+    						//getLogger().info("[udpTransmit]udpIPAddress = " + udpIPAddress);
     						returnMessage = "Success";
     					}
     				} catch (SocketTimeoutException e) {
@@ -275,8 +272,8 @@ public final class Main extends JavaPlugin implements Listener {
     // Initialise LED after IP Address change
     private void reinitialiseLED() {
 		udpTransmit ("Red_On", IPAddress);
-		udpTransmit ("Amber_Off", IPAddress);
-		udpTransmit ("Green_Off", IPAddress);		
+		//udpTransmit ("Amber_Off", IPAddress);
+		//udpTransmit ("Green_Off", IPAddress);		
 		updateLED();
     }
     
@@ -334,10 +331,6 @@ public final class Main extends JavaPlugin implements Listener {
 		 */
 		} else {
 			getLogger().info("[loadConfiguration]config file already exists");	
-			/*
-			 * TODO Probably replace all of this with updateConfig() bar saving of current variables
-			 * TODO Possibly use string parameter of reload for updateConfig() command and load for this
-			 */
 			//Read config file and assign values
 			this.getConfig().options().copyDefaults(false);
 			//The integers will be set to default if not valid so saved back to config at end of method
@@ -397,12 +390,12 @@ public final class Main extends JavaPlugin implements Listener {
     	//Load config from file to check values
     	reloadConfig();
     	String proposedIPAddressString = this.getConfig().getString("LEDIPAddress.IPAddress");
-    	Integer proposedShortTimeout = this.getConfig().getInt("LEDIPAddress.shortTimeout");
-    	Integer proposedTimeout = this.getConfig().getInt("LEDIPAddress.timeout");
+    	String proposedShortTimeoutString = this.getConfig().getString("LEDIPAddress.shortTimeout");
+    	String proposedTimeoutString = this.getConfig().getString("LEDIPAddress.timeout");
     	// TODO Debug lines to be removed later
     	getLogger().info("[updateConfig][DEBUG]Proposed IPAddressString is " + proposedIPAddressString);
-    	getLogger().info("[updateConfig][DEBUG]Proposed ShortTimeout is " + proposedShortTimeout);
-    	getLogger().info("[updateConfig][DEBUG]Proposed Timeout is " + proposedTimeout);
+    	getLogger().info("[updateConfig][DEBUG]Proposed ShortTimeout is " + proposedShortTimeoutString);
+    	getLogger().info("[updateConfig][DEBUG]Proposed Timeout is " + proposedTimeoutString);
 		try {
 			InetAddress proposedIPAddress = InetAddress.getByName(proposedIPAddressString);
 			if (proposedIPAddress.isReachable(timeout)) {
@@ -415,37 +408,42 @@ public final class Main extends JavaPlugin implements Listener {
 	    		getLogger().info("[updateConfig]IP address " + proposedIPAddress + " not reachable, resorting to previous");	
 	    		this.getConfig().set("LEDIPAddress.IPAddress", currentIPAddress.getHostAddress());
 	    	}
-			saveConfig();
-			reinitialiseLED();
+			//saveConfig();
+			//reinitialiseLED();
 		} catch (Exception e) {
 			getLogger().info("[updateConfig]InetAddress has thrown unknownHostException trying to resolve " + proposedIPAddressString);	
 			getLogger().info("[updateConfig]Resorting to previous IPAddress of " + currentIPAddress);	
+			//Possibly remove this line as currentIPAddress is already IPAddress
 			IPAddress = currentIPAddress;
 			this.getConfig().set("LEDIPAddress.IPAddress", IPAddress.getHostAddress());
 			//TODO Possibly remove printStackTrace if error resolved correctly
 			e.printStackTrace();
     	}
-		//TODO Check if timeout values are valid		
-		/*
-		 * if (timeout values are valid) {
-		 * timeout = timeoutProposed;
-		 * } else {
-		 * getLogger().info("timeout not a valid integer, resorting to previous");	
-	     * this.getConfig().set("LEDIPAddress.timeout, timeout);
-	     * }
-	     * 
-		 * 
-		 * 
-		 * if (shortTimeout values are valid) {
-		 * shortTimeout = shortTimeoutProposed;
-		 * } else {
-		 * getLogger().info("shortTimeout not a valid integer, resorting to previous");	
-	    		this.getConfig().set("LEDIPAddress.timeout, shortTimeout);
-		 * saveConfig();
-		 * reinitialiseLED();
-
-		 * }
-		 */
+		//Check if shortTimeout values are valid		
+		if (isInteger(proposedShortTimeoutString)) {
+			int proposedShortTimeout = Integer.parseInt(proposedShortTimeoutString);
+			//if (proposedShortTimeout>=0) {
+				shortTimeout = proposedShortTimeout;
+			//} else {
+		    //    getLogger().info("[updateConfig]Proposed shortTimeout cannot be negative, keeping previous");
+			//}
+		} else {
+			getLogger().info("[updateConfig]Proposed shortTimeout is non integer, keeping previous");
+		}
+		//Check if timeout values are valid
+		if (isInteger(proposedTimeoutString)) {
+			int proposedTimeout = Integer.parseInt(proposedTimeoutString);
+			if (proposedTimeout>=0) {
+				timeout = proposedTimeout;
+			} else {
+		        getLogger().info("[updateConfig]Proposed timeout cannot be negative, keeping previous");
+			}
+		} else {
+			getLogger().info("[updateConfig]Proposed timeout is non integer, keeping previous");
+		}
+		//Set values and save
+		this.getConfig().set("LEDIPAddress.timeout", timeout);
+		this.getConfig().set("LEDIPAddress.shortTimeout", shortTimeout);;
 		saveConfig();
 		/*
 		 * TODO Switch off lED from old IP address
