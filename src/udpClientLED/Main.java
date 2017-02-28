@@ -58,7 +58,8 @@ public final class Main extends JavaPlugin implements Listener {
 		getLogger().info("[onEnable]timeout is set to " + timeout);
 		getLogger().info("[onEnable]shortTimeout is set to " + shortTimeout);
 		// Indicate that plugin has started with a light display
-		udpTransmit ("Funky_Disco", IPAddress);
+		// udpTransmit ("Funky_Disco", IPAddress);
+		udpTransmit ("FlashOnFlashOff", IPAddress);
 		getLogger().info("[onEnable]udpClientLED is switched on"); 
 		udpTransmit ("Red_On", IPAddress);
 		//TODO Check if any players are already logged in and adjust local count accordingly
@@ -197,7 +198,7 @@ public final class Main extends JavaPlugin implements Listener {
     	//getLogger().info("[udpTransmit]IPAddress is " + udpIPAddress);
     	//getLogger().info("[udpTransmit][DEBUG]getHostAddress is " + udpIPAddress.getHostAddress());
     	if (!udpIPAddress.getHostAddress().startsWith("127")) {
-    		byte[] receiveData = new byte[30];
+    		byte[] receiveData = new byte[36];
     		String returnMessage;
     		try {
     			DatagramSocket clientSocket = new DatagramSocket();
