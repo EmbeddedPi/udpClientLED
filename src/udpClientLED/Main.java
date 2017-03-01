@@ -27,7 +27,6 @@ public final class Main extends JavaPlugin implements Listener {
 	 */
 	private static short local = 0;
 	private static short notLocal = 0;
-	
 	private static final String localHost = "127.0.0.1";
 	private static InetAddress recentPlayerIP = null;
 	private static InetAddress routerIP = null;
@@ -58,8 +57,8 @@ public final class Main extends JavaPlugin implements Listener {
 		getLogger().info("[onEnable]timeout is set to " + timeout);
 		getLogger().info("[onEnable]shortTimeout is set to " + shortTimeout);
 		// Indicate that plugin has started with a light display
-		// udpTransmit ("Funky_Disco", IPAddress);
-		udpTransmit ("FlashOnFlashOff", IPAddress);
+		udpTransmit ("Funky_Disco", IPAddress);
+		//udpTransmit ("FlashOnFlashOff", IPAddress);
 		getLogger().info("[onEnable]udpClientLED is switched on"); 
 		udpTransmit ("Red_On", IPAddress);
 		//TODO Check if any players are already logged in and adjust local count accordingly
@@ -273,8 +272,6 @@ public final class Main extends JavaPlugin implements Listener {
     // Initialise LED after IP Address change
     private void reinitialiseLED() {
 		udpTransmit ("Red_On", IPAddress);
-		//udpTransmit ("Amber_Off", IPAddress);
-		//udpTransmit ("Green_Off", IPAddress);		
 		updateLED();
     }
     
@@ -361,7 +358,8 @@ public final class Main extends JavaPlugin implements Listener {
 			getLogger().info("[loadConfiguration][DEBUG]shortTimeOut from file is " + shortTimeout);
 			getLogger().info("[loadConfiguration][DEBUG]IPAddress from file " + IPAddress);
 			//Check report server status for loaded IP address 
-			checkIPAddress(IPAddress);
+			String loadAddressStatus = checkIPAddress(IPAddress);
+			getLogger().info("[loadConfiguration][DEBUG]loadAddressStatus is  " + loadAddressStatus);
 		//Ensure that saved config file matches loaded one (convert IPAddress to string first)
 		getLogger().info("[loadConfiguration][DEBUG]IPAddress.getHostAddress is  " + IPAddress.getHostAddress());
 		this.getConfig().set("LEDIPAddress.IPAddress", IPAddress.getHostAddress());
@@ -369,7 +367,7 @@ public final class Main extends JavaPlugin implements Listener {
 		this.getConfig().set("LEDIPAddress.shortTimeout", shortTimeout);
 		saveConfig();
 		}
-	//TODO Test lines to be deleted later
+	//TODO Debug lines to be deleted later
 	//getLogger().info("[loadConfiguration][DEBUG]Final IPAddressString is " + IPAddressString); 
 	getLogger().info("[loadConfiguration][DEBUG]Final IPAddress is  " + IPAddress); 
 	getLogger().info("[loadConfiguration][DEBUG]Final timeout is " + timeout);
@@ -401,12 +399,13 @@ public final class Main extends JavaPlugin implements Listener {
 			InetAddress proposedIPAddress = InetAddress.getByName(proposedIPAddressString);
 			if (proposedIPAddress.isReachable(timeout)) {
 				//Confirm that udpServerLED is running on proposed target
-				checkIPAddress(proposedIPAddress);				
+				String updateAddressStatus = checkIPAddress(proposedIPAddress);	
+				getLogger().info("[updateConfig][DEBUG]updateAddressStatus is  " + updateAddressStatus);
 				getLogger().info("[updateConfig]Proposed IPAddress of " + proposedIPAddress + " is reachable, keeping");
 				IPAddress = proposedIPAddress;
 				this.getConfig().set("LEDIPAddress.IPAddress", IPAddress.getHostAddress());
 			} else {
-	    		getLogger().info("[updateConfig]IP address " + proposedIPAddress + " not reachable, resorting to previous");	
+	    		getLogger().info("[updateConfig]IP address " + proposedIPAddress + " not reachable, keeping previous");	
 	    		this.getConfig().set("LEDIPAddress.IPAddress", currentIPAddress.getHostAddress());
 	    	}
 			//saveConfig();
@@ -423,11 +422,11 @@ public final class Main extends JavaPlugin implements Listener {
 		//Check if shortTimeout values are valid		
 		if (isInteger(proposedShortTimeoutString)) {
 			int proposedShortTimeout = Integer.parseInt(proposedShortTimeoutString);
-			//if (proposedShortTimeout>=0) {
+			if (proposedShortTimeout>=0) {
 				shortTimeout = proposedShortTimeout;
-			//} else {
-		    //    getLogger().info("[updateConfig]Proposed shortTimeout cannot be negative, keeping previous");
-			//}
+			} else {
+		        getLogger().info("[updateConfig]Proposed shortTimeout cannot be negative, keeping previous");
+			}
 		} else {
 			getLogger().info("[updateConfig]Proposed shortTimeout is non integer, keeping previous");
 		}
@@ -446,6 +445,7 @@ public final class Main extends JavaPlugin implements Listener {
 		this.getConfig().set("LEDIPAddress.timeout", timeout);
 		this.getConfig().set("LEDIPAddress.shortTimeout", shortTimeout);;
 		saveConfig();
+		
 		/*
 		 * TODO Switch off lED from old IP address
 		 * TODO Update LED status for new IP address
@@ -482,7 +482,7 @@ public final class Main extends JavaPlugin implements Listener {
     }
     
     //Method to check if a proposed new IP address is valid.
-    private void checkIPAddress (InetAddress proposedIP) {
+    private String checkIPAddress (InetAddress proposedIP) {
     	//getLogger().info("[checkIPAddress]Starting with " + proposedIP);
 		if (!(proposedIP.getHostAddress().startsWith("127"))) {
 			//getLogger().info("[checkIPAddress]Not loopback address");
@@ -495,21 +495,26 @@ public final class Main extends JavaPlugin implements Listener {
     				if (testTransmit.equals("Oi_Oi_Oi")) {
     					//Server running at this IP address
     					getLogger().info("[checkIPAddress]Server is connecting correctly");	
+    					return "HunkyDory";
     				} else {    					
     					//IP address valid but no server
-    					getLogger().info("[checkIPAddress]Server is connected but application not running");	
+    					getLogger().info("[checkIPAddress]Server is connected but udpServerLED not running");
+    					return "Server not running";
     				}
     			} else {
     			//IP address not reachable
 				getLogger().info("[checkIPAddress]Server is not reachable within timeout");	
+				return "Timeout";
     			}
     		} catch (Exception e) {
     			getLogger().info("[checkIPAddress]Network error or negative timeout value");
     			e.printStackTrace();
+    			return "IO Exception";
     		}
 		} else {
 			// Part of the loopback range
-			getLogger().info("[checkIPAddress]Server is not configured or using loopback address");	
+			getLogger().info("[checkIPAddress]Server is not configured or using loopback address");
+			return "Loopback";
 		}
     }
 
