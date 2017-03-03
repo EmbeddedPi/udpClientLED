@@ -103,21 +103,24 @@ public final class Main extends JavaPlugin implements Listener {
    
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-    	/* TODO
-    	 * This writes to file but doesn't update loaded config
-    	 */
     	if (cmd.getName().equalsIgnoreCase("setUDPIPAddress")) { 
     		// Check a single argument for IPAddress
     		if (checkArguments(args.length, sender, 1)) {
     	    	try {
     	    		// Check whether args[0] is a valid IP address
-    	    		InetAddress IPAddress = InetAddress.getByName(args[0]);
-    	    		if (IPAddress.isReachable(timeout)) {
+    	    		InetAddress IPAddressCommand = InetAddress.getByName(args[0]);
+    	    		if (IPAddressCommand.isReachable(timeout)) {
     	    			sender.sendMessage("IP address is set to " + args[0] + " and is reachable");
     	    			// Set new address and reload plugin
     	    			this.getConfig().set("LEDIPAddress.IPAddress", args[0]);
+    	    			String loadAddressStatus = checkIPAddress(IPAddressCommand);
+    	    			sender.sendMessage("Address is  " + loadAddressStatus);
+    	    			udpTransmit ("FlashOnFlashOff",IPAddress);
+    					udpTransmit ("Funky_Disco", IPAddressCommand);
+    	    			IPAddress = IPAddressCommand;
     	    			saveConfig(); 
     	    			reinitialiseLED();
+
     	    			return true;
     	    		} else {
     	    			// IP Address doesn't work
@@ -127,7 +130,8 @@ public final class Main extends JavaPlugin implements Listener {
     	    			return false;
     	    		}
     	    	} catch (Exception e){
-    	    		//TODO Better error handling than this lazy cop out
+    	    		//Leave IP Address as is
+    	    		getLogger().info("[onCommand]Error resolving IP Adress so keeping previous");	
     	    		e.printStackTrace();
     	    		return false;
     	    	}
@@ -193,7 +197,7 @@ public final class Main extends JavaPlugin implements Listener {
     
 	// public void udpTransmit(String message) {
     public String udpTransmit(String message, InetAddress udpIPAddress) {		
-    	getLogger().info("[udpTransmit] is starting");
+    	//getLogger().info("[udpTransmit] is starting");
     	//getLogger().info("[udpTransmit]IPAddress is " + udpIPAddress);
     	//getLogger().info("[udpTransmit][DEBUG]getHostAddress is " + udpIPAddress.getHostAddress());
     	if (!udpIPAddress.getHostAddress().startsWith("127")) {
@@ -204,7 +208,7 @@ public final class Main extends JavaPlugin implements Listener {
     			clientSocket.setSoTimeout(timeout);
     			//getLogger().info("[udpTransmit]Socket is defined");
     			if (udpIPAddress.isReachable(shortTimeout)) {
-    				getLogger().info("[udpTransmit]" + udpIPAddress + " is reachable");
+    				//getLogger().info("[udpTransmit]" + udpIPAddress + " is reachable");
     				byte[] sendData = message.getBytes();
     				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, udpIPAddress, 9876);
     				clientSocket.send(sendPacket);
@@ -214,16 +218,16 @@ public final class Main extends JavaPlugin implements Listener {
     				//Hangs here if reply not received
     				try {
     					clientSocket.receive(receivePacket);
-    					InetAddress IPAddressRec = receivePacket.getAddress();
-    					int port = receivePacket.getPort();
+    					//InetAddress IPAddressRec = receivePacket.getAddress();
+    					//int port = receivePacket.getPort();
     					String modifiedSentence = new String(receivePacket.getData());
     					modifiedSentence = modifiedSentence.replaceAll("[^\\p{Print}]", "");
     					//getLogger().info("[udpTransmit]Receiving packet from udpTransmit, length =" + receiveData.length);
-    					getLogger().info("[udpTransmit]Got this from " + IPAddressRec + " @ port " + port);
+    					//getLogger().info("[udpTransmit]Got this from " + IPAddressRec + " @ port " + port);
     					if (modifiedSentence.equals("Oi_Oi_Oi")) {
 							returnMessage= "Oi_Oi_Oi";
     					} else {
-    						getLogger().info("[udpTransmit]FROM SERVER:" + modifiedSentence);
+    						//getLogger().info("[udpTransmit]FROM SERVER:" + modifiedSentence);
     						//getLogger().info("[udpTransmit]udpIPAddress = " + udpIPAddress);
     						returnMessage = "Success";
     					}
@@ -296,7 +300,7 @@ public final class Main extends JavaPlugin implements Listener {
      */
     public void loadConfiguration() { 
 		// Create virtual config file
-    	getLogger().info("[loadConfiguration] is starting");
+    	//getLogger().info("[loadConfiguration] is starting");
     	File configFile = new File(getDataFolder(), "config.yml");
     	/*
     	 * If this is the first time that plugin has run or config file not present
@@ -319,10 +323,10 @@ public final class Main extends JavaPlugin implements Listener {
 			timeout = this.getConfig().getInt("LEDIPAddress.timeout");
 			shortTimeout = this.getConfig().getInt("LEDIPAddress.shortTimeout");
 			//Debug lines to deleted later
-			getLogger().info("[loadConfiguration][DEBUG]new IPAddressString is " + IPAddressString);
-			getLogger().info("[loadConfiguration][DEBUG]new IPAddress is " + IPAddress);
-			getLogger().info("[loadConfiguration][DEBUG]new timeout is " + timeout);
-			getLogger().info("[loadConfiguration][DEBUG]new shortTimeOut is " + shortTimeout);	
+			//getLogger().info("[loadConfiguration][DEBUG]new IPAddressString is " + IPAddressString);
+			//getLogger().info("[loadConfiguration][DEBUG]new IPAddress is " + IPAddress);
+			//getLogger().info("[loadConfiguration][DEBUG]new timeout is " + timeout);
+			//getLogger().info("[loadConfiguration][DEBUG]new shortTimeOut is " + shortTimeout);	
 		/*
 		 * Otherwise attempt to load from existing config file and set any
 		 * invalid parameters to default
@@ -346,22 +350,21 @@ public final class Main extends JavaPlugin implements Listener {
 					IPAddress = InetAddress.getByName(IPAddressString);	
 				} catch (Exception e2) {
 					getLogger().info("[loadConfiguration]localHost variable definition invalid, download plugin again.");
-					   //TODO Possibly remove printStackTrace if error resolved correctly
-					   e2.printStackTrace();
+					e2.printStackTrace();
 				}
 				//TODO Possibly remove printStackTrace if error resolved correctly
 				e.printStackTrace();
 			}
 			//Debug lines for testing to be deleted later
-			getLogger().info("[loadConfiguration][DEBUG]IPAddressString from file is " + IPAddressString); 
-			getLogger().info("[loadConfiguration][DEBUG]timeout from file is " + timeout);
-			getLogger().info("[loadConfiguration][DEBUG]shortTimeOut from file is " + shortTimeout);
-			getLogger().info("[loadConfiguration][DEBUG]IPAddress from file " + IPAddress);
+			//getLogger().info("[loadConfiguration][DEBUG]IPAddressString from file is " + IPAddressString); 
+			//getLogger().info("[loadConfiguration][DEBUG]timeout from file is " + timeout);
+			//getLogger().info("[loadConfiguration][DEBUG]shortTimeOut from file is " + shortTimeout);
+			//getLogger().info("[loadConfiguration][DEBUG]IPAddress from file " + IPAddress);
 			//Check report server status for loaded IP address 
 			String loadAddressStatus = checkIPAddress(IPAddress);
 			getLogger().info("[loadConfiguration][DEBUG]loadAddressStatus is  " + loadAddressStatus);
 		//Ensure that saved config file matches loaded one (convert IPAddress to string first)
-		getLogger().info("[loadConfiguration][DEBUG]IPAddress.getHostAddress is  " + IPAddress.getHostAddress());
+		//getLogger().info("[loadConfiguration][DEBUG]IPAddress.getHostAddress is  " + IPAddress.getHostAddress());
 		this.getConfig().set("LEDIPAddress.IPAddress", IPAddress.getHostAddress());
 		this.getConfig().set("LEDIPAddress.timeout", timeout);
 		this.getConfig().set("LEDIPAddress.shortTimeout", shortTimeout);
@@ -369,9 +372,9 @@ public final class Main extends JavaPlugin implements Listener {
 		}
 	//TODO Debug lines to be deleted later
 	//getLogger().info("[loadConfiguration][DEBUG]Final IPAddressString is " + IPAddressString); 
-	getLogger().info("[loadConfiguration][DEBUG]Final IPAddress is  " + IPAddress); 
-	getLogger().info("[loadConfiguration][DEBUG]Final timeout is " + timeout);
-	getLogger().info("[loadConfiguration][DEBUG]Final shortTimeOut is " + shortTimeout);
+	//getLogger().info("[loadConfiguration][DEBUG]Final IPAddress is  " + IPAddress); 
+	//getLogger().info("[loadConfiguration][DEBUG]Final timeout is " + timeout);
+	//getLogger().info("[loadConfiguration][DEBUG]Final shortTimeOut is " + shortTimeout);
     }
 
 	/* Loads config.yml from disc and updates fields
@@ -392,9 +395,9 @@ public final class Main extends JavaPlugin implements Listener {
     	String proposedShortTimeoutString = this.getConfig().getString("LEDIPAddress.shortTimeout");
     	String proposedTimeoutString = this.getConfig().getString("LEDIPAddress.timeout");
     	// TODO Debug lines to be removed later
-    	getLogger().info("[updateConfig][DEBUG]Proposed IPAddressString is " + proposedIPAddressString);
-    	getLogger().info("[updateConfig][DEBUG]Proposed ShortTimeout is " + proposedShortTimeoutString);
-    	getLogger().info("[updateConfig][DEBUG]Proposed Timeout is " + proposedTimeoutString);
+    	//getLogger().info("[updateConfig][DEBUG]Proposed IPAddressString is " + proposedIPAddressString);
+    	//getLogger().info("[updateConfig][DEBUG]Proposed ShortTimeout is " + proposedShortTimeoutString);
+    	//getLogger().info("[updateConfig][DEBUG]Proposed Timeout is " + proposedTimeoutString);
 		try {
 			InetAddress proposedIPAddress = InetAddress.getByName(proposedIPAddressString);
 			if (proposedIPAddress.isReachable(timeout)) {
@@ -404,6 +407,9 @@ public final class Main extends JavaPlugin implements Listener {
 				getLogger().info("[updateConfig]Proposed IPAddress of " + proposedIPAddress + " is reachable, keeping");
 				IPAddress = proposedIPAddress;
 				this.getConfig().set("LEDIPAddress.IPAddress", IPAddress.getHostAddress());
+				udpTransmit ("FlashOnFlashOff", currentIPAddress);
+				udpTransmit ("Funky_Disco", IPAddress);
+				
 			} else {
 	    		getLogger().info("[updateConfig]IP address " + proposedIPAddress + " not reachable, keeping previous");	
 	    		this.getConfig().set("LEDIPAddress.IPAddress", currentIPAddress.getHostAddress());
@@ -445,11 +451,6 @@ public final class Main extends JavaPlugin implements Listener {
 		this.getConfig().set("LEDIPAddress.timeout", timeout);
 		this.getConfig().set("LEDIPAddress.shortTimeout", shortTimeout);;
 		saveConfig();
-		
-		/*
-		 * TODO Switch off lED from old IP address
-		 * TODO Update LED status for new IP address
-		 */
     }
     
     private void copy(InputStream in, File file) {
