@@ -55,7 +55,7 @@ The server must be running on the RaspberryPi first for this change to work. If 
 <UL><b>setUDPTimeout [milliseconds]</b>, sets length of time the plugin will wait for a reply from a newly defined server before giving up. Default 5000 or 5 seconds. If negative or non-integer the new value will be ignored.</UL>
 <UL><b>setUDPShortTimeout [milliseconds]</b>, sets length of time the plugin will wait for a reply from a previously known good server. Default 500 or 0.5 seconds. If negative or non-integer the new value will be ignored.</UL>
 <UL><b>listUDPConfig</b>, shows current status of 3 parameters above.</UL>
-<UL><b>updateUDPConfig</b>, attempts to load new parameters from config.yml after it has been manuaal edited. If the new parameters are not valid then the the plugin reverts to the previous ones. </UL>
+<UL><b>updateUDPConfig</b>, attempts to load new parameters from config.yml after it has been manually edited. If the new parameters are not valid then the the plugin reverts to the previous ones. </UL>
 <p>It should be noted that restarting the server after manually editing config.yml will have broadly the same effect except that in the case of an error it will revert to the defaults not the last known good value. For this reason it is recommended to either use the console commands to change parameters or use <b>updateUDPConfig</b> if manually editing.</p>
 
 
